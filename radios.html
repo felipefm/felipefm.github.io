@@ -55,6 +55,90 @@ h3 {
 
 
 
+article.accordion
+{
+  display: block;
+  width: 100%;
+  margin: 0 auto;
+  background-color: #666;
+  overflow: auto;
+  border-radius: 5px;
+  box-shadow: 0 3px 3px rgba(0,0,0,0.3);
+}
+article.accordion section
+{
+  position: relative;
+  display: block;
+  float: left;
+  width: 2em;
+/*  height: 12em;*/
+  margin: 0.5em 0 0.5em 0.5em;
+  color: #333;
+  background-color: #333;
+  overflow: hidden;
+  border-radius: 3px;
+}
+article.accordion section h2
+{
+  position: absolute;
+  font-size: 1em;
+  font-weight: bold;
+  width: 12em;
+  height: 2em;
+  top: 12em;
+  left: 0;
+  text-indent: 1em;
+  padding: 0;
+  margin: 0;
+  color: #ddd;
+  -webkit-transform-origin: 0 0;
+  -moz-transform-origin: 0 0;
+  -ms-transform-origin: 0 0;
+  -o-transform-origin: 0 0;
+  transform-origin: 0 0;
+  -webkit-transform: rotate(-90deg);
+  -moz-transform: rotate(-90deg);
+  -ms-transform: rotate(-90deg);
+  -o-transform: rotate(-90deg);
+  transform: rotate(-90deg);
+}
+article.accordion section h2 a
+{
+  display: block;
+  width: 100%;
+  line-height: 2em;
+  text-decoration: none;
+  color: inherit;
+  outline: 0 none;
+}
+article.accordion section:target
+{
+  width: 30em;
+  padding: 0 1em;
+  color: #333;
+  background-color: #fff;
+}
+article.accordion section:target h2
+{
+  position: static;
+  font-size: 1.3em;
+  text-indent: 0;
+  color: #333;
+  -webkit-transform: rotate(0deg);
+  -moz-transform: rotate(0deg);
+  -ms-transform: rotate(0deg);
+  -o-transform: rotate(0deg);
+  transform: rotate(0deg);
+}
+article.accordion section,
+article.accordion section h2
+{
+  -webkit-transition: all 1s ease;
+  -moz-transition: all 1s ease;
+  -ms-transition: all 1s ease;
+  -o-transition: all 1s ease;
+  transition: all 1s ease;
+}
 </style>
 
 
@@ -97,7 +181,118 @@ h3 {
   <p><audio src="https://icecast.walmradio.com:8443/classic" type="audio/aac" controls="controls" loop preload="none" title="Classic Vinyl"></audio></p>
 </div>
 
+<button class="accordion"><span id="titulo">Country 9West</span></button>
+<div class="panel">
+  <p><audio src="https://servidor17-2.brlogic.com:7150/live?source=website" type="audio/aac" controls="controls" loop preload="none" title="Country 9West"></audio></p>
+</div>
 
+
+<article class="accordion">
+  <section id="acc1">
+    <h2><a href="#acc1">Title One</a></h2>
+    <p>
+        <button class="accordion"><span id="titulo">Country 9West</span></button>
+        <div class="panel">
+          <p><audio src="https://servidor17-2.brlogic.com:7150/live?source=website" type="audio/aac" controls="controls" loop preload="none" title="Country 9West"></audio></p>
+        </div>
+        <button class="accordion"><span id="titulo">Classic Vinyl</span></button>
+        <div class="panel">
+          <p><audio src="https://icecast.walmradio.com:8443/classic" type="audio/aac" controls="controls" loop preload="none" title="Classic Vinyl"></audio></p>
+        </div>
+        <button class="accordion"><span id="titulo">Radio MEC Rio</span></button>
+        <div class="panel">
+          <p><h3><a href="https://122722d.ha.azioncdn.net/ebc/radiomecfm/chunks.m3u8">Radio MEC Rio</a></h3></p>
+        </div>
+        <button class="accordion"><span id="titulo">80s80</span></button>
+        <div class="panel">
+          <p><audio src="http://streams.80s80s.de/web/mp3-192/streams.80s80s.de" type="audio/aac" controls="controls" loop preload="none" title="80s80"></audio></p>
+        </div>
+        <button class="accordion"><span id="titulo">89 A Radio Rock</span></button>
+        <div class="panel">
+          <p><audio src="https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_89FM_ADP.aac?dist=site-89fm" type="audio/aac" controls="controls" loop preload="none" title="89 A Radio Rock"></audio></p>
+        </div>
+
+        <button class="accordion"><span id="titulo">CBN Rio 92.5 FM</span></button>
+        <div class="panel">
+          <p><audio src="https://26563.live.streamtheworld.com/CBN_RJAAC.aac?dist=radioscombr&1724811734547" type="audio/aac" controls="controls" loop preload="none" title="CBN Rio"></audio></p>
+        </div>
+
+        <button class="accordion"><span id="titulo">Flashback FM</span></button>
+        <div class="panel">
+          <p><audio src="https://stm1.matutos.com.br:8008/;?1724809803082" type="audio/mpeg" controls="controls" loop preload="none" title="Flashback FM"></audio></p>
+        </div>
+    </p>
+  </section>
+  <section id="acc2">
+    <h2><a href="#acc2">Title Two</a></h2>
+    <p>
+      <button class="accordion"><span id="titulo">Airport Lounge Radio</span></button>
+      <div class="panel">
+        <p><audio src="https://az1.mediacp.eu/listen/airport-lounge-radio/radio.mp3" type="audio/aac" controls="controls" loop preload="none" title="AIRPORT LOUNGE RADIO"></audio></p>
+      </div>
+
+      <button class="accordion"><span id="titulo">Cuba80s</span></button>
+      <div class="panel">
+        <p><audio src="https://a7.asurahosting.com:7670/radio.mp3" type="audio/aac" controls="controls" loop preload="none" title="Cuba80s"></audio></p>
+      </div>
+
+      <button class="accordion"><span id="titulo">Hits 99.7FM</span></button>
+      <div class="panel">
+        <p><audio src="https://wz7.servidoresbrasil.com:8031/stream?1724855817001" type="audio/aac" controls="controls" loop preload="none" title="Hits 99.7FM"></audio></p>
+      </div>
+
+      <button class="accordion"><span id="titulo">Antena 1</span></button>
+      <div class="panel">
+        <p><audio src="https://antenaone.crossradio.com.br/stream/1;" type="audio/aac" controls="controls" loop preload="none" title="Antena 1"></audio></p>
+      </div>
+
+      <button class="accordion"><span id="titulo">SomaFM PopTron</span> Meio Miami</button>
+      <div class="panel">
+        <p><audio src="http://ice3.somafm.com/poptron-128-mp3" type="audio/aac" controls="controls" loop preload="none" title="SomaFM PopTron"></audio></p>
+      </div>
+    </p>
+  </section>
+  <section id="acc3">
+    <h2><a href="#acc3">Title Three</a></h2>
+    <p>
+      <button class="accordion"><span id="titulo">FM Chillout Radio</span></button>
+      <div class="panel">
+        <p><audio src="http://strm112.1.fm/chilloutlounge_mobile_mp3" type="audio/aac" controls="controls" loop preload="none" title="FM Chillout Radio"></audio></p>
+      </div>
+
+      <button class="accordion"><span id="titulo">Fluid Radio</span></button>
+      <div class="panel">
+        <p><audio src="https://uk4-vn.mixstream.net/:9270/listen.mp3" type="audio/aac" controls="controls" loop preload="none" title="Fluid Radio"></audio></p>
+      </div>
+
+      <button class="accordion"><span id="titulo">SomaFM Deep Space One</span></button>
+      <div class="panel">
+        <p><audio src="https://ice2.somafm.com/deepspaceone-128-aac" type="audio/aac" controls="controls" loop preload="none" title="SomaFM Deep Space One"></audio></p>
+      </div>
+
+      <button class="accordion"><span id="titulo">SomaFM Groove Salad</span></button>
+      <div class="panel">
+        <p><audio src="http://ice3.somafm.com/groovesalad-128-mp3" type="audio/aac" controls="controls" loop preload="none" title="SomaFM Groove Salad"></audio></p>
+      </div>
+
+      <button class="accordion"><span id="titulo">SomaFM Secret Agent</span></button>
+      <div class="panel">
+        <p><audio src="https://ice.somafm.com/secretagent" type="audio/aac" controls="controls" loop preload="none" title="SomaFM Secret Agent"></audio></p>
+      </div>
+
+      <button class="accordion"><span id="titulo">SomaFM The Dark Zone</span></button>
+      <div class="panel">
+        <p><audio src="https://ice4.somafm.com/darkzone-256-mp3" type="audio/aac" controls="controls" loop preload="none" title="SomaFM The Dark Zone"></audio></p>
+      </div>
+
+      <button class="accordion"><span id="titulo">SomaFM DEF CON</span></button>
+      <div class="panel">
+        <p><audio src="https://ice1.somafm.com/defcon-256-mp3" type="audio/aac" controls="controls" loop preload="none" title="SomaFM DEF CON"></audio></p>
+      </div>
+    </p>
+  </section>
+  
+</article>
 
 
 
