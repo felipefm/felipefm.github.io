@@ -2,34 +2,118 @@
 <html>
 
 <head>
-   <title>Radio</title>
+    <title>Radio</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+.accordion {
+  background-color: #eee;
+  color: #444;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+  transition: 0.4s;
+}
+
+.active, .accordion:hover {
+  background-color: #ccc;
+}
+
+.accordion:after {
+  content: '\002B';
+  color: #777;
+  font-weight: bold;
+  float: right;
+  margin-left: 5px;
+}
+
+.active:after {
+  content: "\2212";
+}
+
+.panel {
+  //padding: 0 0px;
+  background-color: white;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-out;
+}
+h3 {
+    font-size: 1.5rem;
+    padding: 5px;
+}
+#titulo{
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+</style>
+
+
 </head>
 
 <body>
-<h2>Lista de radios Favoritas</h2>
-    <h3>Classic Vinyl</h3>
-    <audio src="https://icecast.walmradio.com:8443/classic" type="audio/aac" controls="controls" loop preload="none" title="Classic Vinyl"></audio>
-<br>
-    <h3>FM Chillout Radio</h3>
-    <audio src="http://strm112.1.fm/chilloutlounge_mobile_mp3" type="audio/aac" controls="controls" loop preload="none" title="FM Chillout Radio"></audio>
-<br>
-    <h3><a href="https://122722d.ha.azioncdn.net/ebc/radiomecfm/chunks.m3u8">Radio MEC Rio</a></h3>
-<br>
-    <h3>Flashback FM</h3>
-    <audio src="https://stm1.matutos.com.br:8008/;?1724809803082" type="audio/mpeg" controls="controls" loop preload="none" title="Flashback FM"></audio>
-<br>
-    <h3>CBN Rio 92.5 FM</h3>
-    <audio src="https://26563.live.streamtheworld.com/CBN_RJAAC.aac?dist=radioscombr&1724811734547" type="audio/aac" controls="controls" loop preload="none" title="CBN Rio"></audio>
-<br>
-    <h3>89 A Radio Rock</h3>
-    <audio src="https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_89FM_ADP.aac?dist=site-89fm" type="audio/aac" controls="controls" loop preload="none" title="89 A Radio Rock"></audio>
+<h2>Lista de Radios Favoritas</h2>
 
 <br>
-    <h3>Route 66</h3>
-    <audio src="http://servidor32.brlogic.com:8056/live" type="audio/aac" controls="controls" loop preload="none" title="Route 66"></audio>
-<br>
-    <h3>80s80</h3>
-    <audio src="http://streams.80s80s.de/web/mp3-192/streams.80s80s.de" type="audio/aac" controls="controls" loop preload="none" title="80s80"></audio>
+
+<button class="accordion"><span id="titulo">80s80</span></button>
+<div class="panel">
+  <p><audio src="http://streams.80s80s.de/web/mp3-192/streams.80s80s.de" type="audio/aac" controls="controls" loop preload="none" title="80s80"></audio></p>
+</div>
+
+<button class="accordion"><span id="titulo">89 A Radio Rock</span></button>
+<div class="panel">
+  <p><audio src="https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_89FM_ADP.aac?dist=site-89fm" type="audio/aac" controls="controls" loop preload="none" title="89 A Radio Rock"></audio></p>
+</div>
+
+<button class="accordion"><span id="titulo">CBN Rio 92.5 FM</span></button>
+<div class="panel">
+  <p><audio src="https://26563.live.streamtheworld.com/CBN_RJAAC.aac?dist=radioscombr&1724811734547" type="audio/aac" controls="controls" loop preload="none" title="CBN Rio"></audio></p>
+</div>
+
+<button class="accordion"><span id="titulo">Flashback FM</span></button>
+<div class="panel">
+  <p><audio src="https://stm1.matutos.com.br:8008/;?1724809803082" type="audio/mpeg" controls="controls" loop preload="none" title="Flashback FM"></audio></p>
+</div>
+
+<button class="accordion"><span id="titulo">Radio MEC Rio</span></button>
+<div class="panel">
+  <p><h3><a href="https://122722d.ha.azioncdn.net/ebc/radiomecfm/chunks.m3u8">Radio MEC Rio</a></span></p>
+</div>
+
+<button class="accordion"><span id="titulo">FM Chillout Radio</span></button>
+<div class="panel">
+  <p><audio src="http://strm112.1.fm/chilloutlounge_mobile_mp3" type="audio/aac" controls="controls" loop preload="none" title="FM Chillout Radio"></audio></p>
+</div>
+
+<button class="accordion"><span id="titulo">Classic Vinyl</span></button>
+<div class="panel">
+  <p><audio src="https://icecast.walmradio.com:8443/classic" type="audio/aac" controls="controls" loop preload="none" title="Classic Vinyl"></audio></p>
+</div>
+
+
+
+<script>
+var acc = document.getElementsByClassName("accordion");
+var i;
+
+for (i = 0; i < acc.length; i++) {
+  acc[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var panel = this.nextElementSibling;
+    if (panel.style.maxHeight) {
+      panel.style.maxHeight = null;
+    } else {
+      panel.style.maxHeight = panel.scrollHeight + "px";
+    } 
+  });
+}
+</script>
 
 </body>
 
