@@ -1,0 +1,534 @@
+/* --- Estilos Base --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color, #f4f7f6);
+    color: var(--text-color, #333);
+    margin: 0;
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+    line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.container {
+    background-color: var(--container-bg-color, #ffffff);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: var(--container-shadow, 0 4px 15px rgba(0,0,0,0.1));
+    border: 1px solid var(--container-border-color, transparent);
+    width: 100%;
+    max-width: 700px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.card {
+    background-color: var(--card-bg-color, #fff);
+    border: 1px solid var(--card-border-color, #e0e0e0);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: var(--card-shadow, 0 2px 5px rgba(0,0,0,0.05));
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+h1, h2 {
+    color: var(--header-color, #005f73);
+    border-bottom: 2px solid var(--header-border-color, #ade8f4);
+    padding-bottom: 10px;
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+h1 {
+    justify-content: space-between; /* Para alinhar o botão de tema */
+}
+
+h1 .icon, h2 .icon {
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+input[type="text"], input[type="range"] {
+    background-color: var(--input-bg-color, #fff);
+    color: var(--input-text-color, #333);
+    border: 1px solid var(--input-border-color, #ccc);
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 1em;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+input[type="text"] {
+    width: calc(100% - 22px); /* Considera padding */
+    margin-bottom: 10px;
+}
+
+button {
+    padding: 10px 15px;
+    margin-right: 5px;
+    margin-bottom: 5px; /* Espaçamento vertical entre botões */
+    border-radius: 5px;
+    border: none;
+    background-color: var(--button-primary-bg, #0077b6);
+    color: var(--button-primary-text, white);
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+button:hover {
+    background-color: var(--button-primary-hover-bg, #005f8e);
+}
+
+button:disabled {
+    background-color: var(--button-disabled-bg, #a0a0a0);
+    color: var(--button-disabled-text, #e0e0e0);
+    cursor: not-allowed;
+}
+
+/* --- Estilos Específicos --- */
+.station-list {
+    max-height: 250px; /* Aumentar um pouco a altura */
+    overflow-y: auto;
+    border: 1px solid var(--list-border-color, #eee);
+    border-radius: 5px;
+    padding: 5px;
+    background-color: var(--list-bg-color, #fff);
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.station-item {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--list-item-border-color, #f0f0f0);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px; /* Espaçamento entre info e actions */
+    transition: background-color 0.2s ease, border-color 0.3s ease;
+}
+
+.station-item:last-child {
+    border-bottom: none;
+}
+
+.station-item:hover {
+    background-color: var(--list-item-hover-bg, #e9f5ff);
+}
+
+.station-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-grow: 1; /* Ocupa espaço disponível */
+    min-width: 0; /* Permite que o texto quebre */
+}
+
+.station-info img.station-favicon {
+    width: 24px; /* Um pouco maior */
+    height: 24px;
+    border-radius: 4px;
+    flex-shrink: 0; /* Não encolhe */
+}
+
+.station-info div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Permite que o texto quebre */
+}
+
+.station-info .name {
+    font-weight: bold;
+    color: var(--list-item-name-color, #023047);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.3s ease;
+}
+
+.station-info .details {
+    font-size: 0.85em;
+    color: var(--list-item-details-color, #666);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.3s ease;
+}
+
+.station-actions {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0; /* Não encolhe */
+}
+
+.station-actions button {
+    margin-left: 5px;
+    padding: 6px 10px;
+    font-size: 0.9em;
+}
+
+.play-station-btn { background-color: var(--button-play-bg, #2a9d8f); }
+.play-station-btn:hover { background-color: var(--button-play-hover-bg, #218073); }
+
+.fav-btn { background-color: var(--button-fav-bg, #e9c46a); color: var(--button-fav-text, #333); }
+.fav-btn.favorited { background-color: var(--button-favorited-bg, #f4a261); color: var(--button-favorited-text, white); }
+.fav-btn:hover { background-color: var(--button-fav-hover-bg, #d8b359); }
+
+.remove-fav-btn { background-color: var(--button-remove-bg, #e76f51); }
+.remove-fav-btn:hover { background-color: var(--button-remove-hover-bg, #d15b3e); }
+
+#nowPlaying {
+    margin-bottom: 15px;
+    font-style: italic;
+    color: var(--nowplaying-text-color, #0077b6);
+    font-weight: bold;
+    padding: 10px;
+    background-color: var(--nowplaying-bg-color, #e9f5ff);
+    border: 1px solid var(--nowplaying-border-color, #cdeeff);
+    border-radius: 5px;
+    text-align: center;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px; /* Espaçamento entre controles */
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    margin-left: auto; /* Empurra para a direita em telas maiores */
+}
+
+.volume-control label {
+    margin-right: 5px;
+}
+
+.volume-control input[type="range"] {
+    width: 100px;
+    padding: 0; /* Remover padding padrão do range */
+}
+
+/* --- Toast Notification --- */
+.toast-notification {
+    visibility: hidden;
+    min-width: 250px;
+    max-width: 80%;
+    background-color: var(--toast-bg-color, #2c3e50);
+    color: var(--toast-text-color, #ecf0f1);
+    text-align: center;
+    border-radius: 8px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1000;
+    left: 50%;
+    bottom: 30px; /* Posicionar na parte inferior */
+    transform: translateX(-50%);
+    font-size: 1em;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: opacity 0.4s ease, bottom 0.4s ease, visibility 0s linear 0.4s;
+}
+
+.toast-notification.show {
+    visibility: visible;
+    opacity: 1;
+    bottom: 50px; /* Anima para cima */
+    transition: opacity 0.4s ease, bottom 0.4s ease;
+}
+
+/* --- Drag and Drop --- */
+.station-item[draggable="true"] {
+    cursor: move;
+}
+
+.drag-handle {
+    cursor: grab;
+    display: inline-block;
+    padding: 0 8px; /* Área de clique maior */
+    margin-right: 5px;
+    color: var(--drag-handle-color, #aaa);
+    font-size: 1.2em;
+    line-height: 1;
+    vertical-align: middle;
+    transition: color 0.3s ease;
+}
+
+.station-item.dragging {
+    opacity: 0.4;
+    background-color: var(--dragging-bg-color, #dcedff);
+}
+
+.station-item.drag-over-top {
+    border-top: 2px dashed var(--drag-over-border-color, #0077b6);
+}
+
+.station-item.drag-over-bottom {
+    border-bottom: 2px dashed var(--drag-over-border-color, #0077b6);
+}
+
+/* --- Import/Export --- */
+#importFile {
+    display: none;
+}
+
+.favorites-actions {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--list-border-color, #eee);
+    display: flex;
+    flex-wrap: wrap; /* Quebra linha em telas menores */
+    gap: 10px;
+    transition: border-color 0.3s ease;
+}
+
+.favorites-actions button {
+    background-color: var(--button-secondary-bg, #6c757d);
+    color: var(--button-secondary-text, white);
+}
+
+.favorites-actions button:hover {
+    background-color: var(--button-secondary-hover-bg, #5a6268);
+}
+
+/* --- Seções Ocultáveis --- */
+.toggle-header {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.toggle-icon {
+    font-size: 0.8em;
+    transition: transform 0.3s ease;
+    margin-left: auto; /* Garante que fique à direita */
+    padding-left: 10px;
+}
+
+.toggle-content {
+    padding-top: 10px; /* Espaçamento quando aberto */
+    /* Animação pode ser adicionada aqui se desejado */
+}
+
+.toggle-content.hidden-section {
+    display: none;
+}
+
+.toggle-header.expanded .toggle-icon {
+    transform: rotate(90deg);
+}
+
+/* --- Botão de Tema --- */
+#themeToggleButton {
+    background: none;
+    border: none;
+    font-size: 1.5em; /* Tamanho do ícone */
+    cursor: pointer;
+    padding: 0 5px;
+    color: var(--header-color, #005f73);
+    transition: color 0.3s ease;
+}
+
+/* --- Responsividade --- */
+
+/* Telas Médias e Pequenas (Tablets e Celulares grandes) */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    .container {
+        padding: 15px;
+    }
+    h1 {
+        font-size: 1.8em;
+    }
+    h2 {
+        font-size: 1.3em;
+    }
+}
+
+/* Telas Pequenas (Celulares) */
+@media (max-width: 600px) {
+    h1 {
+        font-size: 1.6em;
+    }
+    h2 {
+        font-size: 1.2em;
+    }
+
+    button {
+        padding: 12px 15px; /* Botões maiores para toque */
+        font-size: 0.95em;
+    }
+
+    .station-item {
+        flex-direction: column; /* Empilha info e actions */
+        align-items: flex-start; /* Alinha à esquerda */
+        gap: 8px;
+    }
+
+    .station-info {
+        width: 100%; /* Ocupa toda a largura */
+    }
+
+    .station-actions {
+        width: 100%;
+        justify-content: flex-end; /* Alinha botões à direita */
+        margin-top: 5px;
+    }
+
+    .station-actions button {
+        padding: 8px 12px;
+        font-size: 0.85em;
+    }
+
+    .drag-handle {
+        position: absolute; /* Posiciona o handle para não interferir */
+        right: 10px;
+        top: 10px;
+        padding: 5px;
+    }
+
+    .station-item[draggable="true"] {
+        position: relative; /* Necessário para posicionar o handle */
+        padding-right: 40px; /* Espaço para o handle */
+    }
+
+    .controls {
+        flex-direction: column;
+        align-items: stretch; /* Estica os botões */
+        gap: 8px;
+    }
+
+    .controls button {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .volume-control {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 10px;
+        justify-content: center;
+    }
+
+    .volume-control input[type="range"] {
+        flex-grow: 1;
+        max-width: 200px; /* Limita o tamanho */
+    }
+
+    .favorites-actions {
+        justify-content: center; /* Centraliza botões */
+    }
+
+    .toast-notification {
+        min-width: 80%;
+        bottom: 20px;
+    }
+    .toast-notification.show {
+        bottom: 40px;
+    }
+}
+
+/* Telas Muito Pequenas */
+@media (max-width: 400px) {
+    body {
+        padding: 5px;
+    }
+    .container {
+        padding: 10px;
+    }
+    h1 {
+        font-size: 1.4em;
+    }
+    h2 {
+        font-size: 1.1em;
+    }
+    input[type="text"] {
+        padding: 8px;
+        font-size: 0.9em;
+    }
+    button {
+        padding: 10px 12px;
+        font-size: 0.9em;
+    }
+    .station-info .name {
+        font-size: 0.95em;
+    }
+    .station-info .details {
+        font-size: 0.8em;
+    }
+    .station-actions button {
+        padding: 6px 10px;
+        font-size: 0.8em;
+    }
+}
+
+/* --- Tema Escuro --- */
+body.dark-theme {
+    --bg-color: #1a1a1a;
+    --text-color: #e0e0e0;
+    --container-bg-color: #2c2c2c;
+    --container-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    --container-border-color: #444;
+    --card-bg-color: #333333;
+    --card-border-color: #484848;
+    --card-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    --header-color: #66c0f4; /* Azul claro */
+    --header-border-color: #4a90e2;
+    --input-bg-color: #404040;
+    --input-text-color: #e0e0e0;
+    --input-border-color: #555;
+    --button-primary-bg: #4a90e2; /* Azul */
+    --button-primary-hover-bg: #357abd;
+    --button-primary-text: white;
+    --button-disabled-bg: #555;
+    --button-disabled-text: #888;
+    --list-border-color: #484848;
+    --list-bg-color: #333333;
+    --list-item-border-color: #444;
+    --list-item-hover-bg: #404040;
+    --list-item-name-color: #c0c0c0;
+    --list-item-details-color: #a0a0a0;
+    --button-play-bg: #5cb85c; /* Verde */
+    --button-play-hover-bg: #4cae4c;
+    --button-fav-bg: #f0ad4e; /* Laranja */
+    --button-fav-text: white;
+    --button-favorited-bg: #d9534f; /* Vermelho */
+    --button-favorited-text: white;
+    --button-fav-hover-bg: #ec971f;
+    --button-remove-bg: #d9534f; /* Vermelho */
+    --button-remove-hover-bg: #c9302c;
+    --nowplaying-text-color: #66c0f4;
+    --nowplaying-bg-color: #3a3a3a;
+    --nowplaying-border-color: #505050;
+    --toast-bg-color: #e0e0e0;
+    --toast-text-color: #1a1a1a;
+    --drag-handle-color: #888;
+    --dragging-bg-color: #454545;
+    --drag-over-border-color: #66c0f4;
+    --button-secondary-bg: #555;
+    --button-secondary-hover-bg: #444;
+    --button-secondary-text: #e0e0e0;
+}
+
+/* Ajustes finos para tema escuro */
+body.dark-theme .station-info img.station-favicon {
+    filter: brightness(0.9) contrast(1.1); /* Leve ajuste para logos em fundo escuro */
+}
+
+body.dark-theme input[type="range"]::-webkit-slider-thumb {
+    background: #66c0f4;
+}
+
+body.dark-theme input[type="range"]::-moz-range-thumb {
+    background: #66c0f4;
+}
+

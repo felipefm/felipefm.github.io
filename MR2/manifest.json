@@ -1,0 +1,24 @@
+{
+    "name": "Rádio Player Online",
+    "short_name": "RádioApp",
+    "description": "Ouça suas rádios online favoritas. Busque, favorite e instale!",
+    "start_url": "/index.html",
+    "display": "standalone",
+    "background_color": "#f4f7f6",
+    "theme_color": "#0077b6",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
