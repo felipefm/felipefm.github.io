@@ -2,7 +2,7 @@
     "name": "Rádio Player Online",
     "short_name": "RádioApp",
     "description": "Ouça suas rádios online favoritas. Busque, favorite e instale!",
-    "start_url": "/index.html",
+    "start_url": "https://felipefm.github.io/MR2/index.html",
     "display": "standalone",
     "background_color": "#f4f7f6",
     "theme_color": "#0077b6",
