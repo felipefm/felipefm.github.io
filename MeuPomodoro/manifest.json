@@ -2,7 +2,7 @@
     "name": "Pomodoro PWA Deluxe",
     "short_name": "PomodoroDLX",
     "description": "Um aplicativo Pomodoro PWA com gerenciamento de tarefas e gamificação.",
-    "start_url": "https://felipefm.github.io/MeuPomodoro/index.html",
+    "start_url": ".",
     "display": "standalone",
     "background_color": "#1a202c",
     "theme_color": "#38A169",
