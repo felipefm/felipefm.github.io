@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro PWA Deluxe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#38A169"> <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* bg-gray-900 */
+            color: #e2e8f0; /* text-gray-200 */
+            overscroll-behavior-y: contain; /* Prevent pull-to-refresh on body */
+        }
+        .timer-circle {
+            stroke-dasharray: 283; /* 2 * PI * 45 (raio) */
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear;
+        }
+        .modal {
+            display: none; /* Hidden by default */
+        }
+        .modal.active {
+            display: flex; /* Show when active */
+        }
+        /* Custom scrollbar for task list */
+        .task-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .task-list::-webkit-scrollbar-track {
+            background: #2d3748; /* bg-gray-700 */
+            border-radius: 10px;
+        }
+        .task-list::-webkit-scrollbar-thumb {
+            background: #4a5568; /* bg-gray-600 */
+            border-radius: 10px;
+        }
+        .task-list::-webkit-scrollbar-thumb:hover {
+            background: #718096; /* bg-gray-500 */
+        }
+        /* Estilo para inputs e botões com foco */
+        input:focus, button:focus, select:focus {
+            outline: 2px solid #4299e1; /* blue-500 */
+            outline-offset: 2px;
+        }
+        /* Animação de fade-in para o modal */
+        .fade-in {
+            animation: fadeInAnimation 0.3s ease-out;
+        }
+        @keyframes fadeInAnimation {
+            0% { opacity: 0; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+         /* Estilo para o botão de fechar o modal */
+        .close-button {
+            transition: transform 0.2s ease-in-out;
+        }
+        .close-button:hover {
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4 antialiased">
+
+    <div id="app-container" class="w-full max-w-lg bg-gray-800 shadow-2xl rounded-xl p-6 space-y-6">
+        <header class="flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-emerald-400">Pomodoro Deluxe</h1>
+            <div class="flex items-center space-x-2 bg-gray-700 px-4 py-2 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                </svg>
+                <span id="coin-count" class="text-xl font-semibold text-yellow-400">0</span>
+            </div>
+        </header>
+
+        <div class="flex justify-center space-x-2">
+            <button id="work-mode-btn" class="mode-btn bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out" data-mode="work">Foco</button>
+            <button id="short-break-mode-btn" class="mode-btn bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out opacity-75" data-mode="shortBreak">Pausa Curta</button>
+            <button id="long-break-mode-btn" class="mode-btn bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out opacity-75" data-mode="longBreak">Pausa Longa</button>
+        </div>
+
+        <div class="relative flex flex-col items-center justify-center my-8">
+            <svg class="w-64 h-64 transform -rotate-90">
+                <circle class="text-gray-700" stroke-width="10" stroke="currentColor" fill="transparent" r="110" cx="128" cy="128"/>
+                <circle id="timer-progress" class="text-emerald-400 timer-circle" stroke-width="10" stroke-linecap="round" stroke="currentColor" fill="transparent" r="110" cx="128" cy="128"/>
+            </svg>
+            <div id="time-display" class="absolute text-6xl font-bold text-gray-100">25:00</div>
+            <div id="current-task-timer" class="absolute bottom-2 text-sm text-gray-400 mt-2">Nenhuma tarefa selecionada</div>
+        </div>
+
+        <div class="flex justify-center space-x-4">
+            <button id="start-pause-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-lg">
+                Iniciar
+            </button>
+            <button id="reset-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-lg">
+                Resetar
+            </button>
+        </div>
+
+        <div class="space-y-4 pt-6 border-t border-gray-700">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-semibold text-emerald-300">Minhas Tarefas</h2>
+                <button id="toggle-task-section-btn" class="text-emerald-400 hover:text-emerald-300 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+            </div>
+            <div id="task-section" class="space-y-3 hidden"> <div class="flex space-x-2">
+                    <input type="text" id="task-input" class="flex-grow p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 placeholder-gray-500 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Adicionar nova tarefa...">
+                    <button id="add-task-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold p-3 rounded-lg shadow transition duration-150 ease-in-out">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                    </button>
+                </div>
+                <div id="task-list" class="max-h-48 overflow-y-auto space-y-2 task-list pr-2">
+                    </div>
+                <p class="text-sm text-gray-500">Dica: Clique em uma tarefa para torná-la ativa no timer.</p>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center pt-4 border-t border-gray-700">
+             <button id="fullscreen-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v2.5a.5.5 0 001 0V3.5a.5.5 0 01.5-.5h2.5a.5.5 0 000-1H4.5zM15.5 2a.5.5 0 00-.5.5v2.5a.5.5 0 001 0V3.5a.5.5 0 00-.5-.5h-2.5a.5.5 0 000 1H15.5zM4.5 18a.5.5 0 00.5-.5v-2.5a.5.5 0 00-1 0v2.5a.5.5 0 00.5.5h2.5a.5.5 0 000-1H4.5zM15.5 18a1.5 1.5 0 001.5-1.5v-2.5a.5.5 0 00-1 0v2.5a.5.5 0 01-.5.5h-2.5a.5.5 0 000 1H15.5z" clip-rule="evenodd" />
+                </svg>
+                <span>Tela Cheia</span>
+            </button>
+            <button id="settings-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.532 1.532 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.532 1.532 0 01-.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106A1.532 1.532 0 0111.49 3.17zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                </svg>
+                <span>Ajustes</span>
+            </button>
+        </div>
+        <div class="text-center text-xs text-gray-500 pt-2">
+            ID do Usuário (para fins de depuração): <span id="user-id-display">Carregando...</span>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 items-center justify-center p-4 z-50 fade-in">
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md space-y-6 relative">
+            <button id="close-settings-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-200 close-button">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="text-2xl font-bold text-emerald-400 mb-6 text-center">Configurações do Timer</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="work-duration-input" class="block text-sm font-medium text-gray-300 mb-1">Foco (minutos):</label>
+                    <input type="number" id="work-duration-input" value="25" min="1" class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+                <div>
+                    <label for="short-break-duration-input" class="block text-sm font-medium text-gray-300 mb-1">Pausa Curta (minutos):</label>
+                    <input type="number" id="short-break-duration-input" value="5" min="1" class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+                <div>
+                    <label for="long-break-duration-input" class="block text-sm font-medium text-gray-300 mb-1">Pausa Longa (minutos):</label>
+                    <input type="number" id="long-break-duration-input" value="15" min="1" class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+                <div>
+                    <label for="pomodoros-per-long-break-input" class="block text-sm font-medium text-gray-300 mb-1">Pomodoros para Pausa Longa:</label>
+                    <input type="number" id="pomodoros-per-long-break-input" value="4" min="1" class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-gray-700">
+                 <label class="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" id="sound-enabled-checkbox" checked class="form-checkbox h-5 w-5 text-emerald-500 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500 focus:ring-offset-gray-800">
+                    <span class="text-gray-300">Ativar sons de notificação</span>
+                </label>
+                <p class="text-xs text-gray-500 mt-1">Sons simples serão tocados. Edite o código para URLs personalizadas.</p>
+            </div>
+
+            <div class="pt-4 border-t border-gray-700 flex justify-center">
+                <button id="reset-coins-btn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg shadow transition duration-150 ease-in-out">
+                    Zerar Moedas
+                </button>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4">
+                <button id="save-settings-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition duration-150 ease-in-out">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="message-box" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 items-center justify-center p-4 z-50 fade-in">
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full max-w-sm text-center space-y-4">
+            <p id="message-box-text" class="text-lg text-gray-200"></p>
+            <button id="message-box-ok-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition duration-150 ease-in-out">OK</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script type="module" src="script.js"></script>
+</body>
+</html>
