@@ -169,7 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
         stopButton.disabled = !isPlaying;
         // Adicionando um pouco mais de informação ao botão de play (opcional)
         if (isPlaying && stationName) {
-            playButton.innerHTML = `▶️ Tocando <span class="playing-station-name">(<span class="math-inline">\{stationName\.substring\(0,15\)\}</span>{stationName.length > 15 ? '...' : ''})</span>`;
+            playButton.innerHTML = `▶️ Tocando <span class="playing-station-name">(${stationName.substring(0,15)}${stationName.length > 15 ? '...' : ''})</span>`;
         } else if (isPlaying) {
             playButton.innerHTML = "▶️ Tocando...";
         } else {
@@ -185,9 +185,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         searchResultsDiv.innerHTML = "<p>Buscando...</p>";
         try {
-            const apiUrl = `<span class="math-inline">\{API\_BASE\_URL\}?name\=</span>{encodeURIComponent(term)}&limit=30&hidebroken=true&order=clickcount&reverse=true`;
+            const apiUrl = `${API_BASE_URL}?name=${encodeURIComponent(term)}&limit=30&hidebroken=true&order=clickcount&reverse=true`;
             const response = await fetch(apiUrl);
-            if (!response.ok) throw new Error(`Erro na API: <span class="math-inline">\{response\.statusText\} \(</span>{response.status})`);
+            if (!response.ok) throw new Error(`Erro na API: ${response.statusText} (${response.status})`);
             const stations = await response.json();
             displayStations(stations, searchResultsDiv, "search"); // Para resultados da busca
         } catch (error) {
@@ -216,7 +216,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
             const manualStation = {
-                stationuuid: `manual-<span class="math-inline">\{Date\.now\(\)\}\-</span>{Math.random().toString(36).substr(2, 9)}`,
+                stationuuid: `manual-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 name: name,
                 url_resolved: url,
                 favicon: "", // Adicionei favicon vazio para consistência
@@ -246,7 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         for (const cat in favorites) {
             if (favorites[cat] && favorites[cat].find(fav => fav.stationuuid === station.stationuuid)) {
-                showToast(`"<span class="math-inline">\{station\.name\}" já está nos favoritos na categoria "</span>{cat}".`);
+                showToast(`"${station.name}" já está nos favoritos na categoria "${cat}".`);
                 return;
             }
         }
@@ -258,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
         saveFavorites();
         renderFavorites();
         updateSearchResultsStates();
-        showToast(`"<span class="math-inline">\{station\.name\}" adicionada à categoria "</span>{categoryName}"! ⭐`);
+        showToast(`"${station.name}" adicionada à categoria "${categoryName}"! ⭐`);
     }
 
     function removeFromFavorites(stationUuid, categoryName) {
@@ -272,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
             saveFavorites();
             renderFavorites();
             updateSearchResultsStates();
-            showToast(`"<span class="math-inline">\{stationName\}" removida da categoria "</span>{categoryName}".`);
+            showToast(`"${stationName}" removida da categoria "${categoryName}".`);
         } else {
             showToast("Erro: Rádio ou categoria não encontrada para remoção.");
         }
@@ -390,4 +390,326 @@ document.addEventListener("DOMContentLoaded", () => {
         const stationInfoDiv = document.createElement("div");
         stationInfoDiv.classList.add("station-info");
         let faviconHtml = station.favicon ? `<img src="${station.favicon}" alt="logo" class="station-favicon" onerror="this.style.display='none'; this.onerror=null;">` : `<span class="station-favicon-placeholder">🎵</span>`;
-        stationInfoDiv.
+        stationInfoDiv.innerHTML = `
+            ${faviconHtml}
+            <div>
+                <span class="name">${station.name}</span>
+                <span class="details">${station.country || ""} ${station.codec ? `(${station.codec}, ${station.bitrate || "?"}k)` : ""}</span>
+            </div>
+        `;
+
+        const actionsDiv = document.createElement("div");
+        actionsDiv.classList.add("station-actions");
+
+        const playBtn = document.createElement("button");
+        playBtn.textContent = "Tocar";
+        playBtn.classList.add("play-station-btn");
+        playBtn.title = `Tocar ${station.name}`;
+        playBtn.onclick = (e) => { e.stopPropagation(); playStream(station); };
+        actionsDiv.appendChild(playBtn);
+
+        if (type === "favorites") {
+            // Opcional: Adicionar handle de drag and drop para itens favoritos se for reimplementar
+            // const dragHandle = document.createElement("span");
+            // dragHandle.textContent = "☰";
+            // dragHandle.classList.add("drag-handle");
+            // dragHandle.title = "Arraste para reordenar";
+            // actionsDiv.appendChild(dragHandle);
+
+            const removeFavBtn = document.createElement("button");
+            removeFavBtn.textContent = "Remover";
+            removeFavBtn.classList.add("remove-fav-btn");
+            removeFavBtn.title = `Remover ${station.name} dos Favoritos`;
+            removeFavBtn.onclick = (e) => {
+                e.stopPropagation();
+                if (categoryName) { // categoryName deve ser passado por renderFavorites
+                    removeFromFavorites(station.stationuuid, categoryName);
+                } else {
+                    // Fallback caso categoryName não seja passado (deve ser evitado)
+                    console.error("Tentativa de remover favorito sem categoryName:", station.name);
+                    showToast("Erro ao remover: categoria não especificada.", 3000);
+                }
+            };
+            actionsDiv.appendChild(removeFavBtn);
+
+            // Listeners de Drag and Drop foram removidos daqui, pois a lógica precisa ser
+            // refeita para funcionar com categorias.
+            // itemDiv.addEventListener("dragstart", handleDragStart);
+            // ... outros listeners de drag ...
+
+        } else { // type === "search"
+            const isFavorite = isStationInAnyFavorite(station.stationuuid);
+            const favBtn = document.createElement("button");
+            favBtn.textContent = isFavorite ? "Favoritado ★" : "Favoritar ☆";
+            favBtn.classList.add("fav-btn");
+            favBtn.classList.toggle("favorited", isFavorite);
+            favBtn.title = isFavorite ? `${station.name} já está nos Favoritos` : `Adicionar ${station.name} aos Favoritos`;
+            favBtn.onclick = (e) => {
+                e.stopPropagation();
+                // addToFavorites agora lida com perguntar a categoria e verificar duplicatas
+                addToFavorites(station);
+                // updateSearchResultsStates(); // Chamado dentro de addToFavorites e removeFromFavorites
+            };
+            actionsDiv.appendChild(favBtn);
+        }
+
+        itemDiv.appendChild(stationInfoDiv);
+        itemDiv.appendChild(actionsDiv);
+        container.appendChild(itemDiv);
+    }
+
+
+    // --- Funções Auxiliares de Drag and Drop (PRECISAM SER REFEITAS PARA CATEGORIAS) ---
+    // A lógica atual de drag and drop (handleDragStart, handleDrop, etc.)
+    // foi projetada para uma lista plana de favoritos (favorites como um array).
+    // Para funcionar com a nova estrutura de categorias (favorites como um objeto),
+    // essa lógica precisaria ser significativamente reescrita.
+    // Por exemplo, para permitir arrastar entre categorias ou reordenar dentro de uma categoria.
+    // Comentando por enquanto para evitar erros, já que não foi o foco da solicitação atual.
+    /*
+    let draggedItem = null;
+    function handleDragStart(e) { ... }
+    function handleDragEnd(e) { ... }
+    function handleDragOver(e) { ... }
+    function handleDragLeave(e) { ... }
+    function handleDrop(e) { ... }
+    function handleDragOverContainer(e) { ... }
+    function handleDropContainer(e) { ... }
+    */
+
+    // --- Funções de Exportar/Importar Favoritos ---
+    // Modificar para exportar/importar a nova estrutura de objeto
+    function exportFavorites() {
+        if (Object.keys(favorites).length === 0) { // Verifica se o objeto de favoritos está vazio
+            showToast("Não há favoritos para exportar.", 2000);
+            return;
+        }
+        try {
+            const jsonString = JSON.stringify(favorites, null, 2); // favorites já é o objeto
+            const blob = new Blob([jsonString], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "radio_favoritos_categorias.json"; // Nome do arquivo atualizado
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("Favoritos exportados!", 2000);
+        } catch (error) {
+            console.error("Erro ao exportar:", error);
+            showToast("Erro ao exportar favoritos.", 3000);
+        }
+    }
+
+    function importFavorites(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                // Validação básica para a nova estrutura (objeto de categorias)
+                if (typeof importedData !== 'object' || Array.isArray(importedData)) {
+                    throw new Error("Arquivo não contém um objeto de categorias válido.");
+                }
+
+                // Validação mais detalhada (opcional, mas recomendada)
+                for (const category in importedData) {
+                    if (!Array.isArray(importedData[category])) {
+                        throw new Error(`Categoria "${category}" não contém uma lista de estações.`);
+                    }
+                    const isValidCategory = importedData[category].every(item =>
+                        item && typeof item.stationuuid === "string" &&
+                        typeof item.name === "string" // && typeof item.url_resolved === "string" // url_resolved pode não estar em todos os favoritos antigos
+                    );
+                    if (!isValidCategory) {
+                        throw new Error(`Dados de estação inválidos na categoria "${category}".`);
+                    }
+                }
+
+                if (Object.keys(favorites).length > 0 && !confirm("Isso substituirá seus favoritos atuais. Continuar?")) {
+                    event.target.value = null;
+                    return;
+                }
+
+                favorites = importedData; // Substitui com o novo objeto de categorias
+                saveFavorites();
+                renderFavorites();
+                updateSearchResultsStates();
+                showToast("Favoritos importados com sucesso!", 2000);
+            } catch (error) {
+                console.error("Erro ao importar:", error);
+                showToast(`Erro ao importar: ${error.message}`, 4000);
+            } finally {
+                event.target.value = null;
+            }
+        };
+        reader.onerror = () => {
+            showToast("Erro ao ler o arquivo.", 3000);
+            event.target.value = null;
+        };
+        reader.readAsText(file);
+    }
+
+
+    // --- Lógica para Ocultar/Exibir Seções ---
+    function setupToggleSections() {
+        toggleHeaders.forEach(header => {
+            const targetId = header.dataset.target;
+            const targetContent = document.getElementById(targetId);
+            if (targetContent) {
+                // Inicializa o estado baseado na classe 'hidden-section' (se já estiver no HTML)
+                const isInitiallyHidden = targetContent.classList.contains("hidden-section");
+                header.classList.toggle("expanded", !isInitiallyHidden);
+
+                header.addEventListener("click", () => {
+                    const isHidden = targetContent.classList.toggle("hidden-section");
+                    header.classList.toggle("expanded", !isHidden);
+                });
+            } else {
+                console.warn(`Conteúdo alvo não encontrado para o header: ${targetId}`);
+            }
+        });
+    }
+
+    // --- Lógica do Tema Claro/Escuro ---
+    function applyTheme(theme) {
+        if (theme === "dark") {
+            document.body.classList.add("dark-theme");
+            if (themeToggleButton) {
+                themeToggleButton.textContent = "☀️"; // Ícone Sol
+                themeToggleButton.title = "Mudar para Tema Claro";
+            }
+        } else {
+            document.body.classList.remove("dark-theme");
+            if (themeToggleButton) {
+                themeToggleButton.textContent = "🌙"; // Ícone Lua
+                themeToggleButton.title = "Mudar para Tema Escuro";
+            }
+        }
+    }
+
+    function toggleTheme() {
+        const currentTheme = document.body.classList.contains("dark-theme") ? "dark" : "light";
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        applyTheme(newTheme);
+        try {
+            localStorage.setItem("radioTheme", newTheme);
+        } catch (error) {
+            console.error("Erro ao salvar preferência de tema:", error);
+        }
+    }
+
+    function initializeTheme() {
+        let savedTheme = null;
+        try {
+            savedTheme = localStorage.getItem("radioTheme");
+        } catch (error) {
+            console.error("Erro ao ler preferência de tema do localStorage:", error);
+        }
+        const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const initialTheme = savedTheme || (prefersDark ? "dark" : "light");
+        applyTheme(initialTheme);
+        if (window.matchMedia) { // Verifica se matchMedia é suportado
+            window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", e => {
+                 if (!localStorage.getItem("radioTheme")) { // Só aplica se não houver preferência salva
+                     applyTheme(e.matches ? "dark" : "light");
+                 }
+            });
+        }
+    }
+
+    // --- PWA: Service Worker e Instalação ---
+    function registerServiceWorker() {
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("./sw.js") // Caminho relativo à raiz do site
+                    .then(registration => console.log("ServiceWorker: Registrado, escopo:", registration.scope))
+                    .catch(error => console.log("ServiceWorker: Falha no registro:", error));
+            });
+        }
+    }
+
+    function setupInstallPrompt() {
+        window.addEventListener("beforeinstallprompt", (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installButtonContainer && installButton) {
+                 installButtonContainer.style.display = "block";
+                 installButton.onclick = () => {
+                     installButtonContainer.style.display = "none";
+                     deferredPrompt.prompt();
+                     deferredPrompt.userChoice.then((choiceResult) => {
+                         console.log(`Resultado A2HS: ${choiceResult.outcome}`);
+                         deferredPrompt = null;
+                     });
+                 };
+            } else {
+                 console.warn("Elementos do botão de instalação não encontrados.");
+            }
+        });
+
+        window.addEventListener("appinstalled", () => {
+            console.log("App instalado!");
+            if(installButtonContainer) installButtonContainer.style.display = "none";
+            deferredPrompt = null;
+        });
+    }
+
+    // --- Event Listeners Principais ---
+    searchButton.addEventListener("click", () => searchStations(searchInput.value));
+    searchInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") searchStations(searchInput.value);
+    });
+    if (manualAddButton) manualAddButton.addEventListener("click", addManualStation); // Verifica se existe
+
+    playButton.addEventListener("click", () => {
+        if (currentStation && audioPlayer.paused) {
+             if (currentStation.url_resolved.includes(".m3u8") && !currentHlsInstance) { // Se HLS e instância não existe, recria
+                 playStream(currentStation);
+             } else if (currentStation.url_resolved.includes(".m3u8") && currentHlsInstance) { // Se HLS e instância existe
+                 audioPlayer.play().catch(error => handlePlayError(currentStation, error));
+             }
+              else { // Não HLS
+                 audioPlayer.play().catch(error => handlePlayError(currentStation, error));
+             }
+        } else if (!currentStation) {
+             showToast("Nenhuma rádio selecionada para tocar.", 2000);
+        }
+    });
+    stopButton.addEventListener("click", stopStream);
+    volumeControl.addEventListener("input", (e) => audioPlayer.volume = e.target.value);
+
+    // Mudança para addEventListener para consistência e evitar sobrescrita
+    audioPlayer.addEventListener("ended", stopStream);
+    audioPlayer.addEventListener("error", (e) => {
+        console.error("Erro no elemento <audio>:", e);
+        // Evita mostrar toast se HLS.js já tratou o erro e parou o stream
+        if (currentStation && !currentHlsInstance) { // Só mostra toast se não for um erro HLS já tratado
+            showToast(`Erro no stream de "${currentStation.name}".`, 3000);
+            stopStream(); // Garante que pare em caso de erro do elemento audio
+        } else if (currentStation && currentHlsInstance) {
+            console.log("Erro no elemento audio, HLS.js está ativo. Verificar logs do HLS para detalhes.");
+            // HLS.js tem seu próprio tratamento de erro que chama stopStream se fatal.
+        }
+    });
+
+
+    if (exportFavoritesButton) exportFavoritesButton.addEventListener("click", exportFavorites);
+    if (importFavoritesButton && importFileInput) {
+        importFavoritesButton.addEventListener("click", () => importFileInput.click());
+        importFileInput.addEventListener("change", importFavorites);
+    }
+    if (themeToggleButton) themeToggleButton.addEventListener("click", toggleTheme);
+
+    // --- Inicialização da Aplicação ---
+    initializeTheme(); // Aplica o tema antes de renderizar
+    renderFavorites(); // Renderiza favoritos com categorias
+    updatePlayerControls(false, null); // Estado inicial dos controles do player
+    if (typeof setupToggleSections === "function") setupToggleSections(); // Verifica se a função existe
+    registerServiceWorker();
+    setupInstallPrompt();
+
+}); // Fim do DOMContentLoaded
