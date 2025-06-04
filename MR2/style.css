@@ -532,3 +532,26 @@ body.dark-theme input[type="range"]::-moz-range-thumb {
     background: #66c0f4;
 }
 
+
+
+
+.favorite-category-title {
+    margin-top: 25px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #dce4e8; /* Cor mais suave */
+    font-size: 1.3em; /* Um pouco maior */
+    color: #005f73; /* Mantendo a consistência da cor */
+    font-weight: 600; /* Um pouco mais de peso */
+}
+
+/* Remove a margem superior do primeiro título de categoria para melhor espaçamento */
+.favorites-section .card > .favorite-category-title:first-of-type {
+    margin-top: 5px;
+}
+
+/* Ajuste para o container de itens dentro de uma categoria, se necessário */
+.favorite-category-section .station-list-items .station-item {
+    /* Exemplo: se quiser um padding diferente para itens dentro de categorias */
+    /* padding-left: 15px; */
+}
