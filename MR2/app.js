@@ -28,7 +28,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let favorites = JSON.parse(localStorage.getItem("radioFavorites")) || [];
     let deferredPrompt;
     let currentHlsInstance = null;
-    const API_BASE_URL = "https://de1.api.radio-browser.info/json/stations/search";
+    //const API_BASE_URL = "https://de1.api.radio-browser.info/json/stations/search";
+    const API_BASE_URL = 'https://all.api.radio-browser.info/json/stations/search';
 
     // --- Função para mostrar Notificações (Toast) ---
     function showToast(message, duration = 3000) {
