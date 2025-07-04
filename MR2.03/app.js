@@ -88,9 +88,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         stopStream();
         
-        // RadioAnalytics: Registrar click
-        if (window.radioAnalytics) {
-            window.radioAnalytics.recordClick(station);
+        // RadioData: Registrar click
+        if (window.radioData) {
+            window.radioData.recordClick(station);
         }
 
         const streamUrl = station.url_resolved;
@@ -111,9 +111,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             updatePlayerControls(true, station.name);
                             document.title = `▶ ${station.name} - Rádio Player`;
                             
-                            // RadioAnalytics: Iniciar sessão
-                            if (window.radioAnalytics) {
-                                window.radioAnalytics.startListeningSession(station);
+                            // RadioData: Iniciar sessão
+                            if (window.radioData) {
+                                window.radioData.startListeningSession(station);
                             }
                         })
                         .catch(error => handlePlayError(station, error));
@@ -146,9 +146,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     updatePlayerControls(true, station.name);
                     document.title = `▶ ${station.name} - Rádio Player`;
                     
-                    // RadioAnalytics: Iniciar sessão
-                    if (window.radioAnalytics) {
-                        window.radioAnalytics.startListeningSession(station);
+                    // RadioData: Iniciar sessão
+                    if (window.radioData) {
+                        window.radioData.startListeningSession(station);
                     }
                 })
                 .catch(error => handlePlayError(station, error));
@@ -170,9 +170,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function stopStream() {
-        // RadioAnalytics: Finalizar sessão
-        if (window.radioAnalytics) {
-            window.radioAnalytics.endListeningSession();
+        // RadioData: Finalizar sessão
+        if (window.radioData) {
+            window.radioData.endListeningSession();
         }
         
         audioPlayer.pause();
@@ -1031,15 +1031,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Funções de Estatísticas ---
     async function showAnalytics(type = 'clicks') {
-        if (!window.radioAnalytics) {
+        if (!window.radioData) {
             analyticsResults.innerHTML = '<p>Módulo de estatísticas não disponível.</p>';
             return;
         }
         
         try {
             const data = type === 'clicks' ? 
-                await window.radioAnalytics.getTopByClicks(10) : 
-                await window.radioAnalytics.getTopByTime(10);
+                await window.radioData.getTopByClicks(10) : 
+                await window.radioData.getTopByTime(10);
             
             if (data.length === 0) {
                 analyticsResults.innerHTML = '<p>Nenhum dado disponível ainda.</p>';
@@ -1054,7 +1054,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="analytics-stats">
                         ${type === 'clicks' ? 
                             `${station.clicks} clicks` : 
-                            window.radioAnalytics.formatTime(station.totalTime)
+                            window.radioData.formatTime(station.totalTime)
                         }
                     </div>
                 </div>
@@ -1066,13 +1066,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     async function exportAnalytics() {
-        if (!window.radioAnalytics) {
+        if (!window.radioData) {
             showToast('Módulo de estatísticas não disponível.', 3000);
             return;
         }
         
         try {
-            const data = await window.radioAnalytics.exportData();
+            const data = await window.radioData.exportData();
             const jsonString = JSON.stringify(data, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -1091,14 +1091,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     async function clearAnalytics() {
-        if (!window.radioAnalytics) {
+        if (!window.radioData) {
             showToast('Módulo de estatísticas não disponível.', 3000);
             return;
         }
         
         if (confirm('Tem certeza que deseja limpar todas as estatísticas?')) {
             try {
-                await window.radioAnalytics.clearAllData();
+                await window.radioData.clearAllData();
                 showAnalytics(clicksTab.classList.contains('active') ? 'clicks' : 'time');
                 showToast('Estatísticas limpas!', 2000);
             } catch (error) {
@@ -1145,7 +1145,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Carregar estatísticas iniciais
     setTimeout(() => {
-        if (window.radioAnalytics && clicksTab) {
+        if (window.radioData && clicksTab) {
             showAnalytics('clicks');
         }
     }, 1000);
