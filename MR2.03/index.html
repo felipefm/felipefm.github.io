@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rádio Player Online</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#333"/>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="radioAnalytics.js"></script>
+    </head>
+<body>
+    
+
+    <div class="container">
+        <h1>Rádio Player 📻 
+            <div class="header-controls">
+                <a href="https://github.com/felipefm" target="_blank" class="github-link" title="Meu GitHub">
+                    <img src="icons/icons-github-64.png" alt="GitHub" class="github-icon">
+                </a>
+                <select id="titleColorSelect" title="Cor dos Títulos">
+                    <option value="default">🎨 Padrão</option>
+                    <option value="blue">🔵 Azul</option>
+                    <option value="green">🟢 Verde</option>
+                    <option value="purple">🟣 Roxo</option>
+                    <option value="red">🔴 Vermelho</option>
+                    <option value="orange">🟠 Laranja</option>
+                </select>
+                <button id="themeToggleButton" title="Alternar Tema">🌙</button>
+            </div>
+        </h1>
+
+        <div class="search-section card">
+            <h2><span class="icon">🔍</span> Buscar Estações</h2>
+            <input type="text" id="searchInput" placeholder="Nome da rádio, gênero, país...">
+            <button id="searchButton">Buscar</button>
+            <div id="searchResults" class="station-list"></div>
+        </div>
+
+        <div class="manual-add-section card">
+            <h2 class="toggle-header" data-target="manualAddContent"><span class="icon">➕</span> Adicionar Manualmente <span class="toggle-icon">▶</span></h2>
+            <div id="manualAddContent" class="toggle-content hidden-section">
+                <input type="text" id="manualName" placeholder="Nome da Rádio">
+                <input type="text" id="manualUrl" placeholder="URL do Stream (http:// ou https://)">
+                <button id="manualAddButton">Adicionar e Tocar</button>
+            </div>
+        </div>
+
+        <div class="favorites-section card">
+            <h2 class="toggle-header" data-target="favoritesContent"><span class="icon">⭐</span> Favoritos <span class="toggle-icon">▶</span></h2>
+            <div id="favoritesContent" class="toggle-content hidden-section">
+                <div id="favoritesList" class="station-list"></div>
+                <div class="favorites-actions">
+                    <button id="exportFavoritesButton">Exportar Favoritos</button>
+                    <button id="importFavoritesButton">Importar Favoritos</button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;">
+                </div>
+            </div>
+        </div>
+
+        <div class="player-section card">
+            <h2>Player</h2>
+            <div id="nowPlaying">Nenhuma rádio tocando...</div>
+            <audio id="audioPlayer" style="display:none;"></audio> <div class="controls">
+                <button id="playButton" disabled>▶️ Play</button>
+                <button id="stopButton" disabled>⏹️ Stop</button>
+                <div class="volume-control">
+                    <button id="muteButton" title="Silenciar/Ativar Som">🔊</button>
+                    <button id="volumeDown" title="Diminuir Volume">-</button>
+                    <input type="range" id="volumeControl" min="0" max="1" step="0.05" value="1">
+                    <button id="volumeUp" title="Aumentar Volume">+</button>
+                    <span id="volumeDisplay">100%</span>
+                </div>
+            </div>
+        </div>
+        <div class="analytics-section card">
+            <h2 class="toggle-header" data-target="analyticsContent"><span class="icon">📊</span> Estatísticas <span class="toggle-icon">▶</span></h2>
+            <div id="analyticsContent" class="toggle-content hidden-section">
+                <div class="analytics-tabs">
+                    <button id="clicksTab" class="analytics-tab active">Top Clicks</button>
+                    <button id="timeTab" class="analytics-tab">Top Tempo</button>
+                </div>
+                <div id="analyticsResults" class="analytics-results"></div>
+                <div class="analytics-actions">
+                    <button id="exportAnalyticsButton">Exportar Dados</button>
+                    <button id="clearAnalyticsButton">Limpar Dados</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="about-section card">
+            <h2 class="toggle-header" data-target="aboutContent"><span class="icon">ℹ️</span> Sobre o Projeto <span class="toggle-icon">▶</span></h2>
+            <div id="aboutContent" class="toggle-content hidden-section">
+                <div class="about-content">
+                    <h3>📻 Rádio Player Online</h3>
+                    <p>Um player de rádio web moderno e intuitivo que permite descobrir, tocar e organizar suas estações de rádio favoritas de todo o mundo.</p>
+                    
+                    <h4>🚀 Principais Recursos:</h4>
+                    <ul>
+                        <li>🔍 Busca em milhares de estações de rádio online</li>
+                        <li>⭐ Sistema de favoritos com categorias personalizáveis</li>
+                        <li>🎵 Suporte a streams HLS e formatos tradicionais</li>
+                        <li>🌙 Tema claro/escuro com cores personalizáveis</li>
+                        <li>📱 Design responsivo para todos os dispositivos</li>
+                        <li>💾 Exportar/importar favoritos</li>
+                        <li>🔄 Drag & drop para organizar estações</li>
+                    </ul>
+                    
+                    <h4>📄 Licença:</h4>
+                    <p>Este projeto é de código aberto e está disponível sob a licença MIT. Você pode usar, modificar e distribuir livremente.</p>
+                    
+                    <div class="about-footer">
+                        <p>Desenvolvido com ❤️ por <strong>Felipe</strong></p>
+                        <a href="https://github.com/felipefm" target="_blank" class="github-profile-link">
+                            🔗 Ver mais projetos no GitHub
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="installInstructions" style="display:none; margin-top:20px; padding:10px; background-color:#e0f7fa; border:1px solid #00796b; text-align:center;">
+            <button id="installAppButton" style="padding:10px 15px; background-color:#00796b; color:white; border:none; border-radius:5px; cursor:pointer;">Instalar App Rádio</button>
+        </div>
+    </div>
+
+    <div id="toastNotification" class="toast-notification">
+        <span id="toastMessage"></span>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="wakeLock.js"></script>
+</body>
+</html>
