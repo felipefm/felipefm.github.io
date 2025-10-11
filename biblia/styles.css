@@ -1,0 +1,466 @@
+/* --- Estilos Globais e Helpers --- */
+:root {
+    --bg-color: #f4f4f4;
+    --text-color: #333;
+    --header-bg: #fff;
+    --header-text: #333;
+    --button-bg: #333;
+    --button-text: #fff;
+    --modal-bg: #fefefe;
+    --modal-overlay: rgba(0,0,0,0.6);
+    --verse-number-color: #777;
+    --highlight-color: #f0f0f0;
+    --border-color: #ccc;
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a2e;
+    --text-color: #e0e0e0;
+    --header-bg: #162447;
+    --header-text: #e0e0e0;
+    --button-bg: #1f4068;
+    --button-text: #e0e0e0;
+    --modal-bg: #162447;
+    --modal-overlay: rgba(0,0,0,0.8);
+    --verse-number-color: #9e9e9e;
+    --highlight-color: #1f4068;
+    --border-color: #4d4d4d;
+}
+
+.hidden {
+    display: none !important;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+main {
+    padding: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.8;
+    font-size: 1.1em;
+}
+
+main p {
+    margin-bottom: 1em;
+}
+
+.verse-number {
+    font-weight: bold;
+    color: var(--verse-number-color);
+    margin-right: 0.3em;
+    font-size: 0.8em;
+    vertical-align: super;
+}
+
+/* --- Header de Navegação --- */
+#main-header {
+    background: var(--header-bg);
+    color: var(--header-text);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    transition: background-color 0.3s, color 0.3s;
+    /* Em desktop, o layout é em linha */
+    flex-direction: row;
+    gap: 1rem;
+}
+
+/* Wrapper para centralizar o título e o badge */
+#book-info-wrapper {
+    flex-grow: 1; /* Ocupa o espaço central */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+#book-info {
+    cursor: pointer;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+#book-info h1 {
+    margin: 0;
+    font-size: 1.4em;
+}
+
+#translation-badge-container {
+    order: -1; /* Coloca o badge acima do nome do livro em layout de coluna */
+    margin-bottom: 0.5rem;
+}
+
+#translation-badge {
+    padding: 2px 10px;
+    font-size: 0.8em; /* Reduzido para ser mais sutil */
+    background: var(--badge-bg, #e0e0e0);
+    color: var(--badge-color, #333);
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    font-weight: 500;
+    opacity: 0.85;
+}
+
+#chapter-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+#chapter-number {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.chapter-nav-arrow {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    color: var(--text-color);
+}
+
+.chapter-nav-arrow:hover {
+    background-color: var(--highlight-color);
+}
+
+/* Aplica-se apenas a botões que são filhos diretos do container */
+#header-buttons > button {
+    background: var(--button-bg);
+    color: var(--button-text);
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: bold;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+#header-buttons > button:hover {
+    background: #555;
+    transform: scale(1.05);
+}
+
+/* Adicionado para alinhar os botões do cabeçalho */
+#header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+#theme-switcher {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: var(--header-text);
+    padding: 0 0.5rem;
+}
+
+/* --- Menu Dropdown --- */
+#menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+#menu-button {
+    background-color: transparent; /* Garante que não haja cor de fundo cobrindo a imagem */
+    background-image: url('styles/icon-menu.png');
+    background-size: 100%; /* Ajusta o tamanho do ícone dentro do botão */
+    background-repeat: no-repeat;
+    background-position: center;
+    border: 1px solid var(--border-color);
+    color: var(--header-text);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#menu-button:hover {
+    background-color: var(--highlight-color);
+}
+
+#main-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 10px);
+    background-color: var(--modal-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    z-index: 1100;
+    width: 200px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#main-menu button {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    padding: 0.8rem 1.2rem;
+    width: 100%;
+    border-radius: 0;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: background-color 0.2s;
+}
+
+#main-menu button:hover {
+    background-color: var(--highlight-color);
+}
+
+/* --- Modais --- */
+.modal {
+    display: none; /* Escondido por padrão */
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: var(--modal-overlay);
+    animation: fadeIn 0.3s;
+}
+
+.modal-content {
+    background-color: var(--modal-bg);
+    margin: 10% auto;
+    padding: 25px;
+    border-radius: 15px;
+    width: 80%;
+    max-width: 700px;
+    position: relative;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    animation: slideIn 0.4s;
+    color: var(--text-color);
+}
+
+.close-button {
+    color: #aaa;
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: var(--text-color);
+}
+
+/* Modal de Tradução */
+#translation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.translation-item {
+    background: var(--highlight-color);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.translation-item:hover {
+    background: #ddd;
+    transform: translateY(-3px);
+}
+
+/* Modal de Livros */
+#book-list-container {
+    display: flex;
+    gap: 2rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.book-column {
+    flex: 1;
+}
+
+.book-list {
+    list-style: none;
+    padding: 0;
+}
+
+.book-list li {
+    padding: 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.book-list li:hover {
+    background-color: var(--highlight-color);
+}
+
+/* Modal de Capítulos */
+#chapter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+    max-height: 50vh;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.chapter-grid-item {
+    background: var(--highlight-color);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 15px 0;
+    text-align: center;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.chapter-grid-item:hover {
+    background: #ddd;
+    transform: translateY(-3px);
+}
+
+/* Modal de Busca */
+#search-results-container {
+    margin-top: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 10px; /* Para a barra de rolagem não cobrir o conteúdo */
+}
+
+.search-result-item {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item:hover {
+    background-color: var(--highlight-color);
+}
+
+.search-result-item p {
+    margin: 0;
+    font-size: 0.95em;
+}
+
+.search-result-item .search-highlight {
+    background-color: yellow;
+    color: #333;
+    font-weight: bold;
+}
+ 
+/*
+   Removido #translation-display e #current-translation
+   pois o #translation-badge já cumpre essa função no cabeçalho.
+*/
+ 
+/* Estilos do Distintivo de Tradução */
+#translation-badge {
+    margin-left: 12px;
+    padding: 2px 10px;
+    font-size: 0.95em;
+    background: var(--badge-bg, #e0e0e0);
+    color: var(--badge-color, #333);
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    font-weight: 500;
+    opacity: 0.85;
+    transition: background 0.3s, color 0.3s, opacity 0.3s;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+.badge-animate {
+    animation: badgeFadeIn 0.8s;
+}
+
+@keyframes badgeFadeIn {
+    from { opacity: 0; transform: scale(0.8);}
+    to   { opacity: 0.85; transform: scale(1);}
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+@keyframes slideIn {
+    from {transform: translateY(-50px); opacity: 0;}
+    to {transform: translateY(0); opacity: 1;}
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    #main-header {
+        flex-direction: column;
+        padding: 1rem;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    #book-info {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    #book-info h1 {
+        font-size: 1.2em;
+    }
+    #header-buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    #book-list-container {
+        flex-direction: column;
+    }
+    .modal-content {
+        width: 90%;
+        margin: 20% auto;
+    }
+    #chapter-grid {
+        grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+        gap: 10px;
+    }
+}

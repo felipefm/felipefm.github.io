@@ -1,0 +1,13 @@
+{
+  "name": "bible-app",
+  "version": "1.0.0",
+  "description": "A simple Bible app using plain HTML, CSS, and JavaScript.",
+  "main": "index.html",
+  "scripts": {},
+  "keywords": [
+    "Bible",
+    "Web App"
+  ],
+  "author": "Felipe FM",
+  "license": "MIT"
+}

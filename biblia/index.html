@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bible App</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="/public/manifest.json">
+</head>
+<body>
+    <!-- A interface principal começa escondida -->
+    <header id="main-header" class="hidden">
+        <!-- Wrapper para centralizar a informação do livro e os controles -->
+        <div id="book-info-wrapper">
+            <div id="translation-badge-container">
+                <span id="translation-badge"></span>
+            </div>
+            <div id="book-info">
+                <h1>
+                    <span id="book-name"></span>
+                    <span id="chapter-number"></span>
+                </h1>
+                <div id="chapter-controls">
+                    <button id="prev-chapter" class="chapter-nav-arrow" title="Capítulo anterior">&lt;</button>
+                    <button id="next-chapter" class="chapter-nav-arrow" title="Próximo capítulo">&gt;</button>
+                </div>
+            </div>
+        </div>
+        <div id="header-buttons">
+            <button id="search-button">Busca</button>
+            <div id="menu-container">
+                <button id="menu-button" aria-label="Abrir menu de opções"></button>
+                <div id="main-menu" class="hidden">
+                    <button id="chapter-nav-button">Capítulos</button>
+                    <button id="translation-change-button">Trocar Versão</button>
+                    <!-- O botão de tema será inserido aqui pelo JS -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="hidden">
+        <!-- O conteúdo da Bíblia será inserido aqui -->
+    </main>
+
+    <!-- Modal de Seleção de Tradução (aparece no início) -->
+    <div id="translation-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="translation-modal-title">
+        <div class="modal-content">
+            <h2>Selecione uma Versão da Bíblia</h2>
+            <div id="translation-list">
+                <!-- Opções de tradução serão inseridas aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Navegação de Livros -->
+    <div id="book-nav-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="book-nav-modal-title">
+        <div class="modal-content">
+            <span class="close-button book-modal-close" role="button" aria-label="Fechar seletor de livros">&times;</span>
+            <h2>Selecione um Livro</h2>
+            <div id="book-list-container">
+                <div class="book-column">
+                    <h3>Antigo Testamento</h3>
+                    <ul id="old-testament-list" class="book-list"></ul>
+                </div>
+                <div class="book-column">
+                    <h3>Novo Testamento</h3>
+                    <ul id="new-testament-list" class="book-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Navegação de Capítulos -->
+    <div id="chapter-nav-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="chapter-nav-modal-title">
+        <div class="modal-content">
+            <span class="close-button chapter-modal-close" role="button" aria-label="Fechar seletor de capítulos">&times;</span>
+            <h2 id="chapter-nav-modal-title">Selecione um Capítulo</h2>
+            <div id="chapter-grid">
+                <!-- Os números dos capítulos serão inseridos aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Busca -->
+    <div id="search-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="search-modal-title">
+        <div class="modal-content">
+            <span class="close-button search-modal-close" role="button" aria-label="Fechar busca">&times;</span>
+            <h2 id="search-modal-title">Buscar na Bíblia</h2>
+            <div id="search-input-container">
+                <label for="search-input" class="hidden">Termo de busca</label>
+                <input type="search" id="search-input" placeholder="Digite um livro ou palavra-chave...">
+                <button id="search-execute-button">Buscar</button>
+            </div>
+            <div id="search-results-container">
+                <!-- Resultados da busca aparecerão aqui -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
