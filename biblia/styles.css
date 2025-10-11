@@ -189,7 +189,7 @@ main p {
 #menu-button {
     background-color: transparent; /* Garante que não haja cor de fundo cobrindo a imagem */
     background-image: url('styles/icon-menu.png');
-    background-size: 100%; /* Ajusta o tamanho do ícone dentro do botão */
+    background-size: 98%; /* Ajusta o tamanho do ícone dentro do botão */
     background-repeat: no-repeat;
     background-position: center;
     border: 1px solid var(--border-color);
