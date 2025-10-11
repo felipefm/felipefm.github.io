@@ -104,4 +104,4 @@ Que este player traga muitas horas de boa música e inspiração.
 
 ## Se quiser testar
 
-Acesse o link [https://felipefm.github.io/MR2.01/index.html](https://felipefm.github.io/MR2.01/index.html). Você não precisa nem baixar nada.
+Acesse o link [https://felipefm.github.io/MR2.01/index.html](https://felipefm.github.io/MR2.03.02/index.html). Você não precisa nem baixar nada.
