@@ -2,7 +2,7 @@
   "name": "APP Bíblia",
   "short_name": "Bíblia",
   "description": "Um aplicativo simples para leitura da Bíblia com busca e múltiplos temas.",
-  "start_url": ".",
+  "start_url": "https://felipefm.github.io/biblia/index.html",
   "display": "standalone",
   "background_color": "#f4f4f4",
   "theme_color": "#162447",
