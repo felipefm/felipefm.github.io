@@ -19,6 +19,21 @@ const videoGrid = document.getElementById('video-grid');
 const muteAllBtn = document.getElementById('mute-all-btn');
 const unmuteAllBtn = document.getElementById('unmute-all-btn');
 
+// Lives modal elems
+const openLivesBtn = document.getElementById('open-lives-btn');
+const livesModal = document.getElementById('lives-modal');
+const closeLivesBtn = document.getElementById('close-lives-btn');
+const livesList = document.getElementById('lives-list');
+const livesError = document.getElementById('lives-error');
+const apiKeyInput = document.getElementById('youtube-api-key');
+const saveApiKeyBtn = document.getElementById('save-api-key-btn');
+const refreshLivesBtn = document.getElementById('refresh-lives-btn');
+const livesQueryInput = document.getElementById('lives-query');
+const livesRegionSelect = document.getElementById('lives-region');
+const livesOrderSelect = document.getElementById('lives-order');
+const livesDebug = document.getElementById('lives-debug');
+
+
 // ----------------- STATE MANAGEMENT -----------------
 let players = []; // Array para armazenar todas as instâncias dos players
 let nextPlayerId = 0; // contador incremental para garantir IDs únicos mesmo após remoções
@@ -78,7 +93,205 @@ function showCSPWarning() {
         warn.style.display = 'block';
         warn.textContent = "Aviso: não foi possível carregar a API do YouTube (CSP). A extensão usará um fallback via iframes; os controles de mudo devem funcionar, mas funcionalidades avançadas podem ficar limitadas.";
     }
-} 
+}
+
+// ----------------- Lives (YouTube search) -----------------
+function openLivesModal() {
+    // populate api key from localStorage if exists
+    const saved = localStorage.getItem('YT_API_KEY');
+    if (saved) apiKeyInput.value = saved;
+    livesError.style.display = 'none';
+    livesList.innerHTML = '';
+    livesModal.style.display = 'flex';
+    fetchLives();
+}
+
+function closeLivesModal() {
+    livesModal.style.display = 'none';
+}
+
+async function fetchLives() {
+    const apiKey = apiKeyInput.value.trim() || localStorage.getItem('YT_API_KEY');
+    const q = (livesQueryInput && livesQueryInput.value.trim()) || '';
+    const region = (livesRegionSelect && livesRegionSelect.value) || '';
+    const order = (livesOrderSelect && livesOrderSelect.value) || 'date';
+
+    livesError.style.display = 'none';
+    livesList.innerHTML = '';
+    livesDebug.style.display = 'none';
+
+    if (!apiKey) {
+        livesError.textContent = 'É necessário fornecer uma YouTube Data API key para buscar lives. Cole-a no campo acima e clique em Salvar.';
+        livesError.style.display = 'block';
+        return;
+    }
+
+    // Busca paginada: maxResults=50 por página, até maxPages
+    const maxPages = 3; // cuidado com quota: 1 page = 100 unidades (search=100?), ajustar conforme necessidade
+    let allItems = [];
+    let nextPageToken = null;
+
+    try {
+        for (let page = 0; page < maxPages; page++) {
+            const params = new URLSearchParams({ part: 'snippet', eventType: 'live', type: 'video', maxResults: '50', key: apiKey });
+            if (q) params.set('q', q);
+            if (region) params.set('regionCode', region);
+            params.set('order', order);
+            if (nextPageToken) params.set('pageToken', nextPageToken);
+
+            const url = `https://www.googleapis.com/youtube/v3/search?${params.toString()}`;
+            const res = await fetch(url);
+            if (!res.ok) {
+                const body = await res.text();
+                throw new Error(`API Error: ${res.status} ${body}`);
+            }
+            const data = await res.json();
+
+            // acumula e deduplica por videoId
+            const items = (data.items || []).filter(i => i.id && i.id.videoId);
+            for (const it of items) {
+                if (!allItems.find(x => x.id && x.id.videoId === it.id.videoId)) allItems.push(it);
+            }
+
+            // Debug increment
+            livesDebug.textContent = `Page ${page+1}: received ${items.length} items\nTotal collected: ${allItems.length}\n` + (livesDebug.textContent || '');
+            livesDebug.style.display = 'block';
+
+            nextPageToken = data.nextPageToken;
+            if (!nextPageToken) break; // sem mais páginas
+        }
+
+        if (allItems.length === 0) {
+            livesError.textContent = 'Nenhuma live encontrada com os parâmetros atuais. Tente palavra-chave diferente, mude a região ou verifique sua API key/quota.';
+            livesError.style.display = 'block';
+            return;
+        }
+
+        // Se foi solicitado filtro por região, tenta filtrar pelo country do canal
+        if (region) {
+            try {
+                const channelIds = [...new Set(allItems.map(i => i.snippet.channelId).filter(Boolean))];
+                const countryMap = await fetchChannelCountries(channelIds.slice(0, 50), apiKey); // limita para 50 por chamada
+                // Filtra items cujo canal tenha country === region
+                const filtered = allItems.filter(i => countryMap[i.snippet.channelId] === region);
+                livesDebug.textContent = `After channel country filter: ${filtered.length} / ${allItems.length} (requested region=${region})\n` + (livesDebug.textContent || '');
+                if (filtered.length > 0) {
+                    allItems = filtered;
+                } else {
+                    // fallback: tentar com relevanceLanguage para o idioma pt caso region=BR
+                    if (region === 'BR') {
+                        livesDebug.textContent += 'No channels matched country; retrying search with relevanceLanguage=pt fallback.\n';
+                        // refazer busca com relevanceLanguage=pt (simple fallback limited)
+                        const fbParams = new URLSearchParams({ part: 'snippet', eventType: 'live', type: 'video', maxResults: '50', key: apiKey, relevanceLanguage: 'pt', order: order });
+                        if (q) fbParams.set('q', q);
+                        const fbUrl = `https://www.googleapis.com/youtube/v3/search?${fbParams.toString()}`;
+                        const fbRes = await fetch(fbUrl);
+                        if (fbRes.ok) {
+                            const fbData = await fbRes.json();
+                            allItems = fbData.items || [];
+                        }
+                    }
+                }
+            } catch (err) {
+                livesDebug.textContent += 'Error fetching channel countries: ' + (err.message || err) + '\n';
+            }
+        }
+
+        // Ordena localmente por viewCount se necessário (requere request adicional a videos.list)
+        if (order === 'viewCount') {
+            // busca estatísticas dos vídeos (em lotes de 50)
+            const videoIds = allItems.map(i => i.id.videoId).slice(0,50).join(',');
+            const vidRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics,liveStreamingDetails&id=${videoIds}&key=${encodeURIComponent(apiKey)}`);
+            if (vidRes.ok) {
+                const vidData = await vidRes.json();
+                const statsMap = {};
+                (vidData.items || []).forEach(v => {
+                    statsMap[v.id] = v.statistics && v.statistics.viewCount ? parseInt(v.statistics.viewCount,10) : 0;
+                });
+                allItems.sort((a,b) => (statsMap[b.id.videoId] || 0) - (statsMap[a.id.videoId] || 0));
+            }
+        }
+
+        renderLives(allItems);
+    } catch (err) {
+        livesError.textContent = 'Erro ao buscar lives: ' + err.message + '. Verifique se a API Key tem o YouTube Data API v3 ativado e sem restrições de referrer.';
+        livesError.style.display = 'block';
+        livesDebug.textContent = err.stack || err.message;
+        livesDebug.style.display = 'block';
+    }
+}
+
+
+
+// busca informações dos canais (country) em lote
+async function fetchChannelCountries(channelIds, apiKey) {
+    const map = {};
+    if (!channelIds || channelIds.length === 0) return map;
+    try {
+        const url = `https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${channelIds.join(',')}&key=${encodeURIComponent(apiKey)}`;
+        const res = await fetch(url);
+        if (!res.ok) return map;
+        const data = await res.json();
+        (data.items || []).forEach(ch => {
+            if (ch.id && ch.snippet) {
+                map[ch.id] = ch.snippet.country || null; // country may be undefined
+            }
+        });
+    } catch (err) {
+        console.warn('fetchChannelCountries error', err);
+    }
+    return map;
+}
+
+function renderLives(items) {
+    livesList.innerHTML = '';
+    items.forEach(item => {
+        const vid = item.id && item.id.videoId ? item.id.videoId : null;
+        const thumb = item.snippet.thumbnails && (item.snippet.thumbnails.medium || item.snippet.thumbnails.default) ? (item.snippet.thumbnails.medium ? item.snippet.thumbnails.medium.url : item.snippet.thumbnails.default.url) : '';
+        const title = item.snippet.title || '';
+        const channel = item.snippet.channelTitle || '';
+
+        const card = document.createElement('div');
+        card.className = 'live-card';
+
+        const t = document.createElement('div');
+        t.className = 'live-thumb';
+        t.style.backgroundImage = `url(${thumb})`;
+
+        const info = document.createElement('div');
+        info.className = 'live-info';
+        info.innerHTML = `<div class="live-title">${title}</div><div class="live-channel">${channel}</div>`;
+
+        const actions = document.createElement('div');
+        actions.className = 'live-actions';
+
+        const addBtn = document.createElement('button');
+        addBtn.textContent = 'Adicionar';
+        addBtn.addEventListener('click', () => {
+            if (vid) {
+                addVideo(vid);
+                closeLivesModal();
+            }
+        });
+
+        const openBtn = document.createElement('button');
+        openBtn.textContent = 'Abrir';
+        openBtn.addEventListener('click', () => {
+            if (vid) window.open(`https://www.youtube.com/watch?v=${vid}`, '_blank');
+        });
+
+        actions.appendChild(addBtn);
+        actions.appendChild(openBtn);
+
+        // estrutura: thumb em cima, info, ações embaixo — evita cortes nos botões
+        card.appendChild(t);
+        card.appendChild(info);
+        card.appendChild(actions);
+
+        livesList.appendChild(card);
+    });
+}
+
 
 /**
  * Extrai o ID do vídeo de uma URL do YouTube.
@@ -356,6 +569,21 @@ videoUrlInput.addEventListener('keypress', (e) => {
 videoGrid.addEventListener('click', handleVideoGridClick);
 muteAllBtn.addEventListener('click', muteAll);
 unmuteAllBtn.addEventListener('click', unmuteAll);
+
+// Lives modal listeners
+if (openLivesBtn) openLivesBtn.addEventListener('click', openLivesModal);
+if (closeLivesBtn) closeLivesBtn.addEventListener('click', closeLivesModal);
+if (saveApiKeyBtn) saveApiKeyBtn.addEventListener('click', () => {
+    const key = apiKeyInput.value.trim();
+    if (key) {
+        localStorage.setItem('YT_API_KEY', key);
+        livesError.style.display = 'none';
+        fetchLives();
+    }
+});
+if (refreshLivesBtn) refreshLivesBtn.addEventListener('click', fetchLives);
+
+
 
 // Fecha um container expandido e restaura posição anterior (se possível)
 function collapseContainer(container) {
