@@ -97,11 +97,16 @@ function showCSPWarning() {
 
 // ----------------- Lives (YouTube search) -----------------
 function openLivesModal() {
+    console.log('openLivesModal()');
     // populate api key from localStorage if exists
     const saved = localStorage.getItem('YT_API_KEY');
     if (saved) apiKeyInput.value = saved;
     livesError.style.display = 'none';
     livesList.innerHTML = '';
+    if (!livesModal) {
+        console.error('livesModal element not found');
+        return;
+    }
     livesModal.style.display = 'flex';
     fetchLives();
 }
@@ -570,18 +575,35 @@ videoGrid.addEventListener('click', handleVideoGridClick);
 muteAllBtn.addEventListener('click', muteAll);
 unmuteAllBtn.addEventListener('click', unmuteAll);
 
-// Lives modal listeners
-if (openLivesBtn) openLivesBtn.addEventListener('click', openLivesModal);
-if (closeLivesBtn) closeLivesBtn.addEventListener('click', closeLivesModal);
-if (saveApiKeyBtn) saveApiKeyBtn.addEventListener('click', () => {
-    const key = apiKeyInput.value.trim();
-    if (key) {
-        localStorage.setItem('YT_API_KEY', key);
-        livesError.style.display = 'none';
-        fetchLives();
+// Lives modal listeners — attach after DOMContentLoaded and add delegation fallback
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        if (openLivesBtn) openLivesBtn.addEventListener('click', () => { console.log('open-lives-btn clicked'); openLivesModal(); });
+        if (closeLivesBtn) closeLivesBtn.addEventListener('click', closeLivesModal);
+        const closeFooter = document.getElementById('close-lives-btn-footer');
+        if (closeFooter) closeFooter.addEventListener('click', closeLivesModal);
+        if (saveApiKeyBtn) saveApiKeyBtn.addEventListener('click', () => {
+            const key = apiKeyInput.value.trim();
+            if (key) {
+                localStorage.setItem('YT_API_KEY', key);
+                livesError.style.display = 'none';
+                fetchLives();
+            }
+        });
+        if (refreshLivesBtn) refreshLivesBtn.addEventListener('click', fetchLives);
+    } catch (err) {
+        console.error('Error attaching Lives modal listeners', err);
     }
 });
-if (refreshLivesBtn) refreshLivesBtn.addEventListener('click', fetchLives);
+
+// Delegation fallback: if the button exists but initial listener failed, handle clicks at document level
+document.addEventListener('click', (e) => {
+    const t = e.target;
+    if (t && (t.id === 'open-lives-btn' || t.closest && t.closest('#open-lives-btn'))) {
+        console.log('Delegated open-lives-btn click');
+        openLivesModal();
+    }
+});
 
 
 
