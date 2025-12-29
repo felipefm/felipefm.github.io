@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosaico de Vídeos do YouTube</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="controls">
+        <h1>Mosaico de Vídeos</h1>
+        <div class="input-group">
+            <input type="text" id="video-url" placeholder="Cole a URL do vídeo do YouTube aqui">
+            <button id="add-video-btn">Adicionar Vídeo</button>
+        </div>
+        <div class="global-audio-controls">
+            <button id="unmute-all-btn">Ouvir Todos</button>
+            <button id="mute-all-btn">Silenciar Todos</button>
+        </div>
+    </header>
+
+    <div id="csp-warning" class="csp-warning" style="display:none"></div>
+
+    <main id="video-grid" class="video-grid-container"></main> 
+
+    <script src="app.js"></script>
+</body>
+</html>

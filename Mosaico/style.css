@@ -1,0 +1,179 @@
+:root {
+    --bg-color: #1a1a1a;
+    --primary-color: #2a2a2a;
+    --secondary-color: #00aaff;
+    --text-color: #ffffff;
+    --border-radius: 8px;
+    --gap: 10px;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.controls {
+    background-color: var(--primary-color);
+    padding: 15px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 2px solid var(--secondary-color);
+}
+
+.controls h1 {
+    margin: 0;
+    font-size: 1.5em;
+    white-space: nowrap;
+}
+
+.input-group {
+    display: flex;
+    gap: var(--gap);
+    flex-grow: 1;
+    min-width: 250px;
+}
+
+#video-url {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #444;
+    border-radius: var(--border-radius);
+    background-color: #333;
+    color: var(--text-color);
+    font-size: 1em;
+}
+
+#add-video-btn, .global-audio-controls button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--border-radius);
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s;
+}
+
+#add-video-btn:hover, .global-audio-controls button:hover {
+    background-color: #0088cc;
+}
+
+.global-audio-controls {
+    display: flex;
+    gap: var(--gap);
+}
+
+.video-grid-container {
+    flex-grow: 1;
+    display: grid;
+    gap: var(--gap);
+    padding: var(--gap);
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-auto-rows: min-content;
+}
+
+.video-container {
+    position: relative;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    background-color: #000;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    aspect-ratio: 16 / 9;
+}
+
+.video-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 8px;
+    background: rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.video-container:hover .video-overlay {
+    opacity: 1;
+}
+
+.video-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.control-btn {
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.control-btn:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Aviso quando a API do YouTube for bloqueada por CSP */
+.csp-warning {
+    display: none;
+    background: #ffcc00;
+    color: #000;
+    padding: 8px 12px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* Aviso específico por vídeo quando o embed é bloqueado */
+.player-error {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    background: rgba(255, 204, 0, 0.95);
+    color: #000;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-align: center;
+    z-index: 60;
+}
+
+.player-error .open-youtube-btn {
+    margin-left: 8px;
+    background: transparent;
+    border: 1px solid rgba(0,0,0,0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* estilo do botão de assistir */
+.watch-btn {
+    font-weight: 700;
+}
