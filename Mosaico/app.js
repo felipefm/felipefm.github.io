@@ -21,6 +21,7 @@ const unmuteAllBtn = document.getElementById('unmute-all-btn');
 
 // ----------------- STATE MANAGEMENT -----------------
 let players = []; // Array para armazenar todas as instâncias dos players
+let nextPlayerId = 0; // contador incremental para garantir IDs únicos mesmo após remoções
 
 // Ouve mensagens postMessage vindas dos iframes do YouTube para detectar erros/estado
 window.addEventListener('message', (e) => {
@@ -43,7 +44,7 @@ window.addEventListener('message', (e) => {
 });
 
 function showPlayerError(playerId) {
-    const container = document.querySelector(`.video-container:nth-child(${playerId + 1})`);
+    const container = document.querySelector(`.video-container[data-player-id="${playerId}"]`);
     if (!container) return;
     let errEl = container.querySelector('.player-error');
     if (!errEl) {
@@ -95,15 +96,16 @@ function getYouTubeVideoId(url) {
  * @param {string} videoId - O ID do vídeo do YouTube.
  */
 function addVideo(videoId) {
-    const playerCount = players.length;
+    const id = nextPlayerId++;
     const videoContainer = document.createElement('div');
     videoContainer.className = 'video-container';
-    
-    const playerDiv = document.createElement('div');
-    const playerId = `player-${playerCount}`;
-    playerDiv.id = playerId;
+    videoContainer.dataset.playerId = id; // usado para localizar e mover o container
 
-    const overlay = createVideoOverlay(playerCount);
+    const playerDiv = document.createElement('div');
+    const playerDomId = `player-${id}`;
+    playerDiv.id = playerDomId;
+
+    const overlay = createVideoOverlay(id);
 
     videoContainer.appendChild(playerDiv);
     videoContainer.appendChild(overlay);
@@ -112,7 +114,7 @@ function addVideo(videoId) {
     // Se a API do YouTube estiver disponível, usa YT.Player. Senão, cria um iframe de fallback.
     let player;
     if (window.YT && YT.Player) {
-        player = new YT.Player(playerId, {
+        player = new YT.Player(playerDomId, {
             height: '100%',
             width: '100%',
             videoId: videoId,
@@ -123,11 +125,11 @@ function addVideo(videoId) {
                 'rel': 0
             },
             events: {
-                'onReady': (event) => onPlayerReady(event, playerCount),
+                'onReady': (event) => onPlayerReady(event, id),
             }
         });
 
-        players.push({ id: playerCount, instance: player, muted: true, videoId: videoId });
+        players.push({ id: id, instance: player, muted: true, videoId: videoId });
     } else {
         console.warn('YT.Player não disponível — usando iframe de fallback');
         const iframe = document.createElement('iframe');
@@ -142,7 +144,7 @@ function addVideo(videoId) {
         iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
         iframe.style.width = '100%';
         iframe.style.height = '100%';
-        document.getElementById(playerId).appendChild(iframe);
+        document.getElementById(playerDomId).appendChild(iframe);
 
         // Helper para enviar comandos via postMessage (funciona com enablejsapi=1)
         function postCommand(cmd, args = []) {
@@ -150,13 +152,13 @@ function addVideo(videoId) {
                 iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: cmd, args: args }), '*');
             } catch (err) {
                 console.warn('Falha ao enviar comando para iframe:', err);
-                showPlayerError(playerCount);
+                showPlayerError(id);
             }
         }
 
         // Instância que usa postMessage para controlar o player embutido
         players.push({
-            id: playerCount,
+            id: id,
             instance: {
                 getIframe: () => iframe,
                 mute: () => postCommand('mute'),
@@ -202,8 +204,15 @@ function createVideoOverlay(playerId) {
     watchBtn.dataset.playerId = playerId;
     watchBtn.title = "Assistir no YouTube";
 
+    const expandBtn = document.createElement('button');
+    expandBtn.className = 'control-btn expand-btn';
+    expandBtn.innerHTML = '⤢'; // Ícone de expandir
+    expandBtn.dataset.playerId = playerId;
+    expandBtn.title = "Expandir/Reduzir vídeo";
+
     controls.appendChild(muteBtn);
     controls.appendChild(watchBtn);
+    controls.appendChild(expandBtn);
     controls.appendChild(removeBtn);
     overlay.appendChild(controls);
 
@@ -275,9 +284,37 @@ function handleVideoGridClick(e) {
         return;
     }
 
+    // Botão de Expandir/Reduzir
+    if (target.classList.contains('expand-btn')) {
+        const container = videoGrid.querySelector(`.video-container[data-player-id="${playerId}"]`);
+        if (!container) return;
+
+        const currentlyExpanded = videoGrid.querySelector('.video-container.expanded');
+        // Se outro está expandido, fecha-o primeiro
+        if (currentlyExpanded && currentlyExpanded !== container) {
+            collapseContainer(currentlyExpanded);
+        }
+
+        if (container.classList.contains('expanded')) {
+            collapseContainer(container);
+        } else {
+            // salva referência ao próximo irmão para restaurar a posição depois
+            const next = container.nextElementSibling;
+            container.dataset.nextSiblingId = next ? next.dataset.playerId : '';
+            // move para topo para ocupar toda a largura
+            videoGrid.prepend(container);
+            container.classList.add('expanded');
+            const expBtn = container.querySelector('.expand-btn');
+            if (expBtn) expBtn.innerHTML = '⤡';
+            container.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+        return;
+    }
+
     // Controle de Remover Vídeo
     if (target.classList.contains('remove-btn')) {
-        playerWrapper.instance.getIframe().parentElement.parentElement.remove();
+        const container = videoGrid.querySelector(`.video-container[data-player-id="${playerId}"]`);
+        if (container) container.remove();
         // Remove o player do array para não ser mais controlado
         players = players.filter(p => p.id !== playerId);
     }
@@ -319,3 +356,30 @@ videoUrlInput.addEventListener('keypress', (e) => {
 videoGrid.addEventListener('click', handleVideoGridClick);
 muteAllBtn.addEventListener('click', muteAll);
 unmuteAllBtn.addEventListener('click', unmuteAll);
+
+// Fecha um container expandido e restaura posição anterior (se possível)
+function collapseContainer(container) {
+    if (!container || !container.classList.contains('expanded')) return;
+    container.classList.remove('expanded');
+    const nextId = container.dataset.nextSiblingId;
+    if (nextId) {
+        const nextElem = videoGrid.querySelector(`.video-container[data-player-id="${nextId}"]`);
+        if (nextElem) {
+            videoGrid.insertBefore(container, nextElem);
+        } else {
+            videoGrid.appendChild(container);
+        }
+    } else {
+        videoGrid.appendChild(container);
+    }
+    const expBtn = container.querySelector('.expand-btn');
+    if (expBtn) expBtn.innerHTML = '⤢';
+}
+
+// Fecha expandidos com ESC
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const expanded = document.querySelector('.video-container.expanded');
+        if (expanded) collapseContainer(expanded);
+    }
+});

@@ -76,8 +76,26 @@ body {
     display: grid;
     gap: var(--gap);
     padding: var(--gap);
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    /* Layout responsivo: 3 colunas por padrão, adapta para 2/1 em telas menores.
+       Mantém proporção dos vídeos e evita que novos vídeos reduzam o tamanho dos existentes. */
+    grid-template-columns: repeat(3, 1fr); /* 3 vídeos por linha em telas maiores */
     grid-auto-rows: min-content;
+    align-content: start;
+    justify-content: start;
+    overflow-y: auto; /* permite rolar verticalmente quando exceder altura */
+    padding-bottom: 20px; /* espaço extra para rolagem */
+}
+
+@media (max-width: 900px) {
+    .video-grid-container {
+        grid-template-columns: repeat(2, 1fr); /* 2 colunas em tablets / telas médias */
+    }
+}
+
+@media (max-width: 600px) {
+    .video-grid-container {
+        grid-template-columns: 1fr; /* 1 coluna em celulares */
+    }
 }
 
 .video-container {
@@ -87,12 +105,31 @@ body {
     background-color: #000;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     aspect-ratio: 16 / 9;
+    transition: all 300ms ease;
 }
 
 .video-container iframe {
     width: 100%;
     height: 100%;
     border: none;
+}
+
+/* Estado expandido: ocupa toda a largura da grade e aumenta a altura */
+.video-container.expanded {
+    grid-column: 1 / -1; /* ocupa todas as colunas */
+    height: min(65vh, 720px);
+    aspect-ratio: unset;
+    z-index: 50;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    transform: translateZ(0);
+}
+
+.video-container.expanded iframe {
+    height: 100%;
+}
+
+.expand-btn {
+    font-weight: 700;
 }
 
 .video-overlay {
