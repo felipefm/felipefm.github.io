@@ -102,13 +102,15 @@ function openLivesModal() {
     const saved = localStorage.getItem('YT_API_KEY');
     if (saved) apiKeyInput.value = saved;
     livesError.style.display = 'none';
-    livesList.innerHTML = '';
     if (!livesModal) {
         console.error('livesModal element not found');
         return;
     }
     livesModal.style.display = 'flex';
-    fetchLives();
+    // Só busca se a lista estiver vazia para economizar quota (evita re-fetch ao reabrir modal)
+    if (livesList.children.length === 0) {
+        fetchLives();
+    }
 }
 
 function closeLivesModal() {
@@ -132,7 +134,7 @@ async function fetchLives() {
     }
 
     // Busca paginada: maxResults=50 por página, até maxPages
-    const maxPages = 3; // cuidado com quota: 1 page = 100 unidades (search=100?), ajustar conforme necessidade
+    const maxPages = 1; // Reduzido para 1 página (50 itens) para economizar quota (cada busca = 100 unidades)
     let allItems = [];
     let nextPageToken = null;
 
@@ -595,17 +597,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Error attaching Lives modal listeners', err);
     }
 });
-
-// Delegation fallback: if the button exists but initial listener failed, handle clicks at document level
-document.addEventListener('click', (e) => {
-    const t = e.target;
-    if (t && (t.id === 'open-lives-btn' || t.closest && t.closest('#open-lives-btn'))) {
-        console.log('Delegated open-lives-btn click');
-        openLivesModal();
-    }
-});
-
-
 
 // Fecha um container expandido e restaura posição anterior (se possível)
 function collapseContainer(container) {
