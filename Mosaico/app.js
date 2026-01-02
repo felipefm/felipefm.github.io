@@ -421,6 +421,8 @@ function addVideo(videoId, save = true) {
         try {
             if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
                 originParam = `&origin=${encodeURIComponent('chrome-extension://' + chrome.runtime.id)}`;
+            } else if (window.location.protocol.startsWith('http')) {
+                originParam = `&origin=${encodeURIComponent(window.location.origin)}`;
             }
         } catch (e) {}
         iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&mute=1${originParam}`;
