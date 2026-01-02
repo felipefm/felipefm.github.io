@@ -356,6 +356,7 @@ function handleDrop(e) {
         } else {
             this.before(dragSrcEl);
         }
+        saveState(); // Salva a nova ordem após arrastar
     }
     return false;
 }
@@ -369,8 +370,9 @@ function handleDragEnd(e) {
 /**
  * Cria um novo player de vídeo e o adiciona à grade.
  * @param {string} videoId - O ID do vídeo do YouTube.
+ * @param {boolean} save - Se deve salvar o estado após adicionar (padrão: true).
  */
-function addVideo(videoId) {
+function addVideo(videoId, save = true) {
     const id = nextPlayerId++;
     const videoContainer = document.createElement('div');
     videoContainer.className = 'video-container';
@@ -383,6 +385,8 @@ function addVideo(videoId) {
     const playerDiv = document.createElement('div');
     const playerDomId = `player-${id}`;
     playerDiv.id = playerDomId;
+    playerDiv.style.width = '100%';
+    playerDiv.style.height = '100%';
 
     const overlay = createVideoOverlay(id);
 
@@ -451,6 +455,9 @@ function addVideo(videoId) {
 
         // Caso o player interno envie um erro via postMessage, o listener global irá disparar showPlayerError
     }
+
+    // Salva o estado atual (se não estivermos carregando um backup)
+    if (save) saveState();
 }
 
 /**
@@ -596,6 +603,7 @@ function handleVideoGridClick(e) {
         if (container) container.remove();
         // Remove o player do array para não ser mais controlado
         players = players.filter(p => p.id !== playerId);
+        saveState(); // Salva o estado após remover
     }
 }
 
@@ -652,6 +660,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         if (refreshLivesBtn) refreshLivesBtn.addEventListener('click', fetchLives);
+
+        // Inicializa funcionalidades extras (Persistência, Menu Mosaico+, etc)
+        initExtraFeatures();
     } catch (err) {
         console.error('Error attaching Lives modal listeners', err);
     }
@@ -683,3 +694,468 @@ document.addEventListener('keydown', (e) => {
         if (expanded) collapseContainer(expanded);
     }
 });
+
+// ----------------- NOVAS FUNCIONALIDADES (Mosaico+) -----------------
+
+// 1. Persistência de Estado
+function saveState() {
+    const currentVideos = [];
+    // Itera sobre o DOM para garantir a ordem visual correta
+    const containers = document.querySelectorAll('.video-container');
+    containers.forEach(container => {
+        const pid = parseInt(container.dataset.playerId, 10);
+        const p = players.find(pl => pl.id === pid);
+        if (p) currentVideos.push(p.videoId);
+    });
+    localStorage.setItem('mosaico_state', JSON.stringify(currentVideos));
+}
+
+function loadState() {
+    const state = JSON.parse(localStorage.getItem('mosaico_state') || '[]');
+    // Carrega os vídeos sem salvar a cada inserção (save=false) para performance
+    state.forEach(vid => addVideo(vid, false));
+}
+
+// 2. Inicialização e UI
+function initExtraFeatures() {
+    injectExtraStyles();
+    createToolsUI();
+    loadState(); // Restaura o mosaico ao abrir
+}
+
+function injectExtraStyles() {
+    const css = `
+    /* Layouts Inteligentes */
+    .layout-grid-2x2 {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        height: calc(100vh - 80px);
+        overflow: hidden;
+    }
+    .layout-grid-2x2 .video-container { width: 100% !important; height: 100% !important; margin: 0 !important; }
+    
+    .layout-focus {
+        display: grid !important;
+        grid-template-columns: 3fr 1fr;
+        grid-template-rows: repeat(3, 1fr);
+        height: calc(100vh - 80px);
+        overflow: hidden;
+    }
+    .layout-focus .video-container { width: 100% !important; height: 100% !important; margin: 0 !important; }
+    .layout-focus .video-container:first-child { grid-row: 1 / -1; grid-column: 1 / 2; }
+    .layout-focus .video-container:not(:first-child) { grid-column: 2 / 3; }
+
+    /* Botão Mosaico+ */
+    #tools-btn {
+        background-color: #4CAF50; color: white; border: none; padding: 8px 15px;
+        margin-left: 10px; cursor: pointer; border-radius: 4px; font-weight: bold;
+    }
+    #tools-btn:hover { background-color: #45a049; }
+
+    /* Modal Mosaico+ */
+    .tools-modal {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); z-index: 3000; justify-content: center; align-items: center;
+    }
+    .tools-content {
+        background: #222; color: #eee; padding: 20px; border-radius: 8px;
+        width: 600px; max-width: 95%; max-height: 90vh; overflow-y: auto;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    .tools-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .tools-tabs { display: flex; border-bottom: 1px solid #444; margin-bottom: 15px; }
+    .tools-tab {
+        padding: 10px 20px; cursor: pointer; background: transparent; border: none;
+        color: #aaa; font-weight: bold; font-size: 14px;
+    }
+    .tools-tab.active { color: #fff; border-bottom: 3px solid #4CAF50; }
+    .tools-panel { display: none; }
+    .tools-panel.active { display: block; }
+    
+    .preset-item, .fav-item {
+        background: #333; padding: 10px; margin-bottom: 8px; border-radius: 4px;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .tool-btn {
+        padding: 5px 10px; cursor: pointer; background: #555; color: white;
+        border: none; border-radius: 4px; margin-left: 5px;
+    }
+    .tool-btn.danger { background: #d32f2f; }
+    .tool-btn.primary { background: #1976D2; }
+    .tool-input { padding: 8px; border-radius: 4px; border: 1px solid #555; background: #333; color: white; width: 70%; }
+    .live-badge {
+        background: #f00; color: white; padding: 2px 6px; border-radius: 3px;
+        font-size: 10px; text-transform: uppercase; font-weight: bold; margin-left: 8px;
+        display: none;
+    }
+    .live-badge.on { display: inline-block; }
+    `;
+    const style = document.createElement('style');
+    style.textContent = css;
+    document.head.appendChild(style);
+}
+
+function createToolsUI() {
+    // Botão na barra superior
+    const toolsBtn = document.createElement('button');
+    toolsBtn.id = 'tools-btn';
+    toolsBtn.textContent = 'Mosaico+';
+    if (openLivesBtn && openLivesBtn.parentNode) {
+        openLivesBtn.parentNode.insertBefore(toolsBtn, openLivesBtn.nextSibling);
+    }
+    
+    // Modal
+    const modalHtml = `
+    <div id="tools-modal" class="tools-modal">
+        <div class="tools-content">
+            <div class="tools-header">
+                <h2>Ferramentas Mosaico+</h2>
+                <button id="close-tools-btn" class="tool-btn">Fechar</button>
+            </div>
+            <div class="tools-tabs">
+                <button class="tools-tab active" data-tab="presets">Presets</button>
+                <button class="tools-tab" data-tab="layouts">Layouts</button>
+                <button class="tools-tab" data-tab="favorites">Favoritos</button>
+            </div>
+            
+            <!-- Presets Panel -->
+            <div id="panel-presets" class="tools-panel active">
+                <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                    <input type="text" id="preset-name" class="tool-input" placeholder="Nome do grupo (ex: Notícias)">
+                    <button id="save-preset-btn" class="tool-btn primary">Salvar Atual</button>
+                </div>
+                <div id="presets-list"></div>
+            </div>
+
+            <!-- Layouts Panel -->
+            <div id="panel-layouts" class="tools-panel">
+                <p>Escolha como os vídeos são organizados na tela:</p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="tool-btn layout-btn" data-layout="">Automático (Flex)</button>
+                    <button class="tool-btn layout-btn" data-layout="layout-grid-2x2">Grade 2x2 Fixa</button>
+                    <button class="tool-btn layout-btn" data-layout="layout-focus">Foco (1 Grande + 3 Pequenos)</button>
+                </div>
+            </div>
+
+            <!-- Favorites Panel -->
+            <div id="panel-favorites" class="tools-panel">
+                <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                    <input type="text" id="fav-channel-id" class="tool-input" placeholder="ID (UC...) ou Handle (@canal)">
+                    <button id="add-fav-btn" class="tool-btn primary">Adicionar</button>
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button id="export-favs-btn" class="tool-btn" style="flex: 1;">Exportar</button>
+                    <button id="import-favs-btn" class="tool-btn" style="flex: 1;">Importar</button>
+                </div>
+                <button id="check-favs-btn" class="tool-btn" style="width:100%; margin-bottom:10px;">Verificar Lives Agora</button>
+                <div id="favs-list"></div>
+            </div>
+        </div>
+    </div>`;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    setupToolsLogic();
+}
+
+function setupToolsLogic() {
+    const modal = document.getElementById('tools-modal');
+    const openBtn = document.getElementById('tools-btn');
+    const closeBtn = document.getElementById('close-tools-btn');
+    
+    openBtn.addEventListener('click', () => { modal.style.display = 'flex'; renderPresets(); renderFavorites(); });
+    closeBtn.addEventListener('click', () => modal.style.display = 'none');
+    
+    // Tabs
+    document.querySelectorAll('.tools-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tools-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tools-panel').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+        });
+    });
+
+    // --- Presets Logic ---
+    const savePresetBtn = document.getElementById('save-preset-btn');
+    savePresetBtn.addEventListener('click', () => {
+        const name = document.getElementById('preset-name').value.trim();
+        if (!name) return alert('Digite um nome para o preset.');
+        const currentVideos = JSON.parse(localStorage.getItem('mosaico_state') || '[]');
+        if (currentVideos.length === 0) return alert('Adicione vídeos antes de salvar.');
+        
+        const presets = JSON.parse(localStorage.getItem('mosaico_presets') || '{}');
+        presets[name] = currentVideos;
+        localStorage.setItem('mosaico_presets', JSON.stringify(presets));
+        document.getElementById('preset-name').value = '';
+        renderPresets();
+    });
+
+    // --- Layouts Logic ---
+    document.querySelectorAll('.layout-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            videoGrid.className = 'video-grid ' + btn.dataset.layout; // Reseta e aplica classe
+            modal.style.display = 'none';
+        });
+    });
+
+    // --- Favorites Logic ---
+    document.getElementById('add-fav-btn').addEventListener('click', async () => {
+        const input = document.getElementById('fav-channel-id').value.trim();
+        if (!input) return;
+
+        const apiKey = localStorage.getItem('YT_API_KEY');
+        if (!apiKey) return alert('Configure a API Key na aba de Lives para adicionar favoritos.');
+
+        const btn = document.getElementById('add-fav-btn');
+        const originalText = btn.textContent;
+        btn.textContent = 'Buscando...';
+        btn.disabled = true;
+
+        let channelId = null;
+        let handle = null;
+
+        // Lógica para extrair ID ou Handle
+        const idMatch = input.match(/\/channel\/(UC[^/?&]+)/);
+        if (idMatch) {
+            channelId = idMatch[1];
+        } else if (input.includes('@')) {
+            const match = input.match(/@([^/?&]+)/);
+            if (match) handle = '@' + match[1];
+        } else if (input.startsWith('UC') && input.length > 15) {
+            channelId = input;
+        } else {
+            handle = '@' + input;
+        }
+
+        try {
+            let url;
+            if (channelId) {
+                url = `https://www.googleapis.com/youtube/v3/channels?part=snippet,id&id=${channelId}&key=${apiKey}`;
+            } else {
+                url = `https://www.googleapis.com/youtube/v3/channels?part=snippet,id&forHandle=${encodeURIComponent(handle)}&key=${apiKey}`;
+            }
+
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (data.items && data.items.length > 0) {
+                const item = data.items[0];
+                const newFav = {
+                    id: item.id,
+                    title: item.snippet.title
+                };
+
+                const favs = JSON.parse(localStorage.getItem('mosaico_favorites') || '[]');
+                // Verifica duplicidade (suporta formato antigo string e novo objeto)
+                const exists = favs.some(f => (typeof f === 'string' ? f === newFav.id : f.id === newFav.id));
+                
+                if (!exists) {
+                    favs.push(newFav);
+                    localStorage.setItem('mosaico_favorites', JSON.stringify(favs));
+                    renderFavorites();
+                }
+                document.getElementById('fav-channel-id').value = '';
+            } else {
+                alert('Canal não encontrado.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Erro: ' + err.message);
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    });
+
+    // --- Export Favorites ---
+    document.getElementById('export-favs-btn').addEventListener('click', () => {
+        const favs = localStorage.getItem('mosaico_favorites') || '[]';
+        const blob = new Blob([favs], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "mosaico_favoritos.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    // --- Import Favorites ---
+    document.getElementById('import-favs-btn').addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = event => {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    if (!Array.isArray(imported)) throw new Error('Formato inválido');
+                    
+                    const current = JSON.parse(localStorage.getItem('mosaico_favorites') || '[]');
+                    let count = 0;
+                    imported.forEach(item => {
+                        const id = typeof item === 'string' ? item : item.id;
+                        const exists = current.some(c => (typeof c === 'string' ? c : c.id) === id);
+                        if (!exists) { current.push(item); count++; }
+                    });
+                    
+                    localStorage.setItem('mosaico_favorites', JSON.stringify(current));
+                    renderFavorites();
+                    alert(`${count} favoritos importados com sucesso!`);
+                } catch (err) { alert('Erro ao importar: ' + err.message); }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    });
+
+    document.getElementById('check-favs-btn').addEventListener('click', checkFavoritesLive);
+}
+
+function renderPresets() {
+    const list = document.getElementById('presets-list');
+    const presets = JSON.parse(localStorage.getItem('mosaico_presets') || '{}');
+    list.innerHTML = '';
+    Object.keys(presets).forEach(name => {
+        const div = document.createElement('div');
+        div.className = 'preset-item';
+        div.innerHTML = `<span>${name} (${presets[name].length} vídeos)</span>`;
+        
+        const loadBtn = document.createElement('button');
+        loadBtn.className = 'tool-btn primary';
+        loadBtn.textContent = 'Carregar';
+        loadBtn.onclick = () => {
+            videoGrid.innerHTML = ''; players = []; // Limpa tudo
+            presets[name].forEach(vid => addVideo(vid, false));
+            saveState();
+            document.getElementById('tools-modal').style.display = 'none';
+        };
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'tool-btn danger';
+        delBtn.textContent = 'X';
+        delBtn.onclick = () => {
+            delete presets[name];
+            localStorage.setItem('mosaico_presets', JSON.stringify(presets));
+            renderPresets();
+        };
+
+        const actions = document.createElement('div');
+        actions.append(loadBtn, delBtn);
+        div.appendChild(actions);
+        list.appendChild(div);
+    });
+}
+
+function renderFavorites() {
+    const list = document.getElementById('favs-list');
+    const favs = JSON.parse(localStorage.getItem('mosaico_favorites') || '[]');
+    const cache = JSON.parse(localStorage.getItem('mosaico_favorites_cache') || '{}');
+    const now = Date.now();
+
+    list.innerHTML = '';
+    favs.forEach(item => {
+        const id = typeof item === 'string' ? item : item.id;
+        const title = typeof item === 'string' ? item : item.title;
+
+        let isLive = false;
+        let videoId = null;
+        if (cache[id] && (now - cache[id].timestamp < 3600000)) { // 1 hora de cache
+            isLive = cache[id].isLive;
+            videoId = cache[id].videoId;
+        }
+
+        const div = document.createElement('div');
+        div.className = 'fav-item';
+        div.dataset.channelId = id;
+        div.innerHTML = `
+            <div style="display:flex; flex-direction:column; flex:1;">
+                <span style="font-weight:bold;">${title}</span>
+                <div class="fav-status-row" style="display:flex; align-items:center; gap:5px; font-size:0.8em; color:#aaa;">
+                    <span>${id}</span> <span class="live-badge ${isLive ? 'on' : ''}">AO VIVO</span>
+                </div>
+            </div>
+            <div>
+                <button class="tool-btn danger" onclick="removeFavorite('${id}')">X</button>
+            </div>`;
+
+        if (isLive && videoId) {
+            const row = div.querySelector('.fav-status-row');
+            const watchBtn = document.createElement('button');
+            watchBtn.className = 'tool-btn primary watch-fav-btn';
+            watchBtn.textContent = 'Assistir';
+            watchBtn.style.marginLeft = '10px';
+            watchBtn.onclick = () => { addVideo(videoId); document.getElementById('tools-modal').style.display = 'none'; };
+            row.appendChild(watchBtn);
+        }
+
+        list.appendChild(div);
+    });
+}
+
+window.removeFavorite = function(idToRemove) {
+    let favs = JSON.parse(localStorage.getItem('mosaico_favorites') || '[]');
+    favs = favs.filter(f => (typeof f === 'string' ? f : f.id) !== idToRemove);
+    localStorage.setItem('mosaico_favorites', JSON.stringify(favs));
+    renderFavorites();
+};
+
+async function checkFavoritesLive() {
+    const favs = JSON.parse(localStorage.getItem('mosaico_favorites') || '[]');
+    if (favs.length === 0) return;
+    
+    const apiKey = localStorage.getItem('YT_API_KEY');
+    if (!apiKey) return alert('Configure a API Key na aba de Lives primeiro.');
+
+    const btn = document.getElementById('check-favs-btn');
+    btn.textContent = 'Verificando...';
+    
+    const cache = JSON.parse(localStorage.getItem('mosaico_favorites_cache') || '{}');
+    const now = Date.now();
+    
+    for (const item of favs) {
+        const channelId = typeof item === 'string' ? item : item.id;
+        try {
+            // Busca se há vídeo do tipo 'live' para este canal
+            const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`);
+            const data = await res.json();
+            const item = document.querySelector(`.fav-item[data-channel-id="${channelId}"]`);
+            
+            if (data.items && data.items.length > 0) {
+                const videoId = data.items[0].id.videoId;
+                cache[channelId] = { isLive: true, videoId: videoId, timestamp: now };
+
+                if (item) {
+                    const badge = item.querySelector('.live-badge');
+                    badge.classList.add('on');
+                    // Adiciona botão de assistir se não existir
+                    if (!item.querySelector('.watch-fav-btn')) {
+                        const watchBtn = document.createElement('button');
+                        watchBtn.className = 'tool-btn primary watch-fav-btn';
+                        watchBtn.textContent = 'Assistir';
+                        watchBtn.style.marginLeft = '10px';
+                        watchBtn.onclick = () => { addVideo(videoId); document.getElementById('tools-modal').style.display = 'none'; };
+                        const statusRow = item.querySelector('.fav-status-row');
+                        if (statusRow) statusRow.appendChild(watchBtn);
+                    }
+                }
+            } else {
+                cache[channelId] = { isLive: false, timestamp: now };
+                if (item) {
+                    item.querySelector('.live-badge').classList.remove('on');
+                    const existingBtn = item.querySelector('.watch-fav-btn');
+                    if (existingBtn) existingBtn.remove();
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+    localStorage.setItem('mosaico_favorites_cache', JSON.stringify(cache));
+    btn.textContent = 'Verificar Lives Agora';
+}
