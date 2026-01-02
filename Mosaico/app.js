@@ -311,6 +311,61 @@ function getYouTubeVideoId(url) {
     return match ? match[1] : null;
 }
 
+// ----------------- DRAG AND DROP -----------------
+let dragSrcEl = null;
+
+function setupDragEvents(elem) {
+    elem.addEventListener('dragstart', handleDragStart);
+    elem.addEventListener('dragover', handleDragOver);
+    elem.addEventListener('dragenter', handleDragEnter);
+    elem.addEventListener('dragleave', handleDragLeave);
+    elem.addEventListener('drop', handleDrop);
+    elem.addEventListener('dragend', handleDragEnd);
+}
+
+function handleDragStart(e) {
+    dragSrcEl = this;
+    e.dataTransfer.effectAllowed = 'move';
+    this.style.opacity = '0.4'; // Visual feedback
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleDragEnter(e) {
+    this.classList.add('over');
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('over');
+}
+
+function handleDrop(e) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (dragSrcEl !== this) {
+        const grid = this.parentNode;
+        const children = Array.from(grid.children);
+        const srcIndex = children.indexOf(dragSrcEl);
+        const targetIndex = children.indexOf(this);
+        
+        if (srcIndex < targetIndex) {
+            this.after(dragSrcEl);
+        } else {
+            this.before(dragSrcEl);
+        }
+    }
+    return false;
+}
+
+function handleDragEnd(e) {
+    this.style.opacity = '1';
+    const items = document.querySelectorAll('.video-container');
+    items.forEach(item => item.classList.remove('over'));
+}
+
 /**
  * Cria um novo player de vídeo e o adiciona à grade.
  * @param {string} videoId - O ID do vídeo do YouTube.
@@ -320,6 +375,10 @@ function addVideo(videoId) {
     const videoContainer = document.createElement('div');
     videoContainer.className = 'video-container';
     videoContainer.dataset.playerId = id; // usado para localizar e mover o container
+
+    // Habilita Drag and Drop
+    videoContainer.setAttribute('draggable', true);
+    setupDragEvents(videoContainer);
 
     const playerDiv = document.createElement('div');
     const playerDomId = `player-${id}`;
