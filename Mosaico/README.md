@@ -2,7 +2,7 @@
 
 > *Uma janela para múltiplos mundos. Uma tela, infinitas histórias.*
 
-![Mosaico Preview]([https://via.placeholder.com/800x400/222/eee?text=O+Mosaico+em+Ação](https://github.com/felipefm/felipefm.github.io/blob/master/Mosaico/2026-01-02%2014.45.52%20felipefm.github.io%200dc6761e15bc.png?raw=true))
+![Mosaico Preview](https://github.com/felipefm/felipefm.github.io/blob/master/Mosaico/2026-01-02%2014.45.52%20felipefm.github.io%200dc6761e15bc.png?raw=true)
 
 ---
 
@@ -82,3 +82,4 @@ Embora a alma do projeto seja a simplicidade, o corpo é feito de:
 
 
 Feito com 💜 para quem ama ver além.
+
