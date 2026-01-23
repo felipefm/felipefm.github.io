@@ -79,12 +79,18 @@ function showPlayerError(playerId) {
 
 // ----------------- CORE FUNCTIONS -----------------
 
+let isStateLoaded = false; // Flag para evitar carregamento duplo
 /**
  * Chamada quando a API do YouTube está pronta.
  * Não precisamos fazer nada aqui no início, mas a função precisa existir.
  */
 function onYouTubeIframeAPIReady() {
     console.log("API do YouTube pronta.");
+    // Carrega os vídeos salvos agora que a API (YT.Player) está garantida
+    if (!isStateLoaded) {
+        loadState();
+        isStateLoaded = true;
+    }
 }
 
 function showCSPWarning() {
@@ -94,6 +100,15 @@ function showCSPWarning() {
         warn.textContent = "Aviso: não foi possível carregar a API do YouTube (CSP). A extensão usará um fallback via iframes; os controles de mudo devem funcionar, mas funcionalidades avançadas podem ficar limitadas.";
     }
 }
+
+// Fallback de segurança: se a API do YouTube demorar ou falhar, carrega os vídeos mesmo assim
+setTimeout(() => { 
+    if (!window.YT && !isStateLoaded) {
+        showCSPWarning();
+        loadState(); 
+        isStateLoaded = true;
+    }
+}, 2000);
 
 // ----------------- Lives (YouTube search) -----------------
 function openLivesModal() {
@@ -389,6 +404,11 @@ function addVideo(videoId, save = true) {
     playerDiv.style.height = '100%';
 
     const overlay = createVideoOverlay(id);
+    
+    // Cria o badge de status (Ao Vivo / Gravado)
+    const statusBadge = document.createElement('div');
+    statusBadge.className = 'video-status';
+    videoContainer.appendChild(statusBadge);
 
     videoContainer.appendChild(playerDiv);
     videoContainer.appendChild(overlay);
@@ -397,20 +417,37 @@ function addVideo(videoId, save = true) {
     // Se a API do YouTube estiver disponível, usa YT.Player. Senão, cria um iframe de fallback.
     let player;
     if (window.YT && YT.Player) {
+        const playerVars = {
+            'autoplay': 1,
+            'controls': 0,
+            'modestbranding': 1,
+            'rel': 0
+        };
+        // Adiciona origin se estiver em http/https para evitar erros de CORS/Embed
+        if (window.location.protocol.startsWith('http')) {
+            playerVars.origin = window.location.origin;
+        }
+
         player = new YT.Player(playerDomId, {
             height: '100%',
             width: '100%',
             videoId: videoId,
-            playerVars: {
-                'autoplay': 1,
-                'controls': 0,
-                'modestbranding': 1,
-                'rel': 0
-            },
+            playerVars: playerVars,
             events: {
                 'onReady': (event) => onPlayerReady(event, id),
+                'onStateChange': (event) => onPlayerStateChange(event, id),
+                'onError': (event) => onPlayerError(event, id)
             }
         });
+
+        // Correção para erros de "Violation" e Autoplay:
+        // A API cria o iframe, mas às vezes sem as permissões completas. Vamos forçar.
+        const generatedIframe = player.getIframe();
+        if (generatedIframe) {
+            // Remove atributo legado para evitar aviso no console, pois já usamos 'allow="... fullscreen ..."'
+            generatedIframe.removeAttribute('allowfullscreen');
+            generatedIframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen; clipboard-write; accelerometer; gyroscope');
+        }
 
         players.push({ id: id, instance: player, muted: true, videoId: videoId });
     } else {
@@ -419,10 +456,10 @@ function addVideo(videoId, save = true) {
         // adiciona origin para melhorar compatibilidade com enablejsapi
         let originParam = '';
         try {
-            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
-                originParam = `&origin=${encodeURIComponent('chrome-extension://' + chrome.runtime.id)}`;
-            } else if (window.location.protocol.startsWith('http')) {
+            if (window.location.protocol.startsWith('http')) {
                 originParam = `&origin=${encodeURIComponent(window.location.origin)}`;
+            } else if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+                originParam = `&origin=${encodeURIComponent('chrome-extension://' + chrome.runtime.id)}`;
             }
         } catch (e) {}
         iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&mute=1${originParam}`;
@@ -507,6 +544,46 @@ function createVideoOverlay(playerId) {
     return overlay;
 }
 
+/**
+ * Atualiza o badge visual (Ao Vivo vs Gravado) com base nos dados do player.
+ */
+function updateVideoStatus(player, playerId) {
+    const container = document.querySelector(`.video-container[data-player-id="${playerId}"]`);
+    if (!container) return;
+    
+    const badge = container.querySelector('.video-status');
+    if (!badge) return;
+
+    // getVideoData retorna metadados, incluindo isLive (booleano)
+    // Nota: isLive é true para transmissões ativas. Se acabou, vira false.
+    let isLive = false;
+    let statusKnown = false;
+
+    try {
+        if (typeof player.getVideoData !== 'function') return;
+        const data = player.getVideoData();
+        // Verifica se a propriedade isLive existe (pode ser boolean ou undefined)
+        if (data && typeof data.isLive !== 'undefined') {
+            isLive = data.isLive;
+            statusKnown = true;
+        }
+    } catch(e) { console.warn(e); }
+
+    if (isLive) {
+        container.dataset.wasLive = 'true'; // Marca que detectamos como live
+        badge.textContent = 'AO VIVO';
+        badge.className = 'video-status status-live';
+        badge.style.display = ''; // Garante que o CSS da classe (display: block) funcione
+    } else if (container.dataset.wasLive === 'true') {
+        // Só mostra status de gravado/encerrado se sabíamos que era uma live antes
+        badge.textContent = 'ENCERRADO';
+        badge.className = 'video-status status-recorded';
+        badge.style.display = '';
+    } else {
+        // Vídeos normais ou lives antigas (sem histórico na sessão) ficam sem badge
+        badge.style.display = 'none';
+    }
+}
 
 // ----------------- EVENT HANDLERS -----------------
 
@@ -521,6 +598,33 @@ function onPlayerReady(event, playerId) {
     const playerWrapper = players.find(p => p.id === playerId);
     if (playerWrapper) {
         playerWrapper.muted = true;
+    }
+    // Verifica se é live ou gravado assim que carrega
+    updateVideoStatus(event.target, playerId);
+}
+
+/**
+ * Chamado quando o estado do player muda (ex: terminou, pausou).
+ */
+function onPlayerStateChange(event, playerId) {
+    // Atualiza status em Play (1), Buffer (3), Ended (0) ou Cued (5)
+    // Isso garante que peguemos o status 'isLive' assim que os metadados carregarem
+    if (event.data === 1 || event.data === 3 || event.data === 0 || event.data === 5) {
+        // Re-verifica o status
+        updateVideoStatus(event.target, playerId);
+    }
+}
+
+/**
+ * Chamado quando ocorre erro no player.
+ */
+function onPlayerError(event, playerId) {
+    showPlayerError(playerId);
+    // Esconde o badge se der erro, para não mostrar "GRAVADO" incorretamente
+    const container = document.querySelector(`.video-container[data-player-id="${playerId}"]`);
+    if (container) {
+        const badge = container.querySelector('.video-status');
+        if (badge) badge.style.display = 'none';
     }
 }
 
@@ -722,7 +826,7 @@ function loadState() {
 function initExtraFeatures() {
     injectExtraStyles();
     createToolsUI();
-    loadState(); // Restaura o mosaico ao abrir
+    // loadState() removido daqui e movido para onYouTubeIframeAPIReady para garantir uso da API
 }
 
 function injectExtraStyles() {

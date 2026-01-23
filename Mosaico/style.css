@@ -151,6 +151,23 @@ body {
     opacity: 1;
 }
 
+/* Status do vídeo (Ao Vivo / Gravado) */
+.video-status {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: 700;
+    text-transform: uppercase;
+    pointer-events: none;
+    z-index: 20; /* Acima do overlay */
+    display: none;
+}
+.status-live { background-color: #ff0000; color: #fff; display: block; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.status-recorded { background-color: #333; color: #ccc; display: block; border: 1px solid #555; }
+
 .video-controls {
     display: flex;
     justify-content: flex-end;
