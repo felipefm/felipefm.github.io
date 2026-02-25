@@ -16,50 +16,13 @@
         <div class="global-audio-controls">
             <button id="unmute-all-btn">Ouvir Todos</button>
             <button id="mute-all-btn">Silenciar Todos</button>
-            <button id="open-lives-btn" title="Lives Agora">Lives Agora</button>
         </div>
     </header>
 
     <div id="csp-warning" class="csp-warning" style="display:none"></div>
 
-    <!-- Modal: Lives Agora -->
-    <div id="lives-modal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <button id="close-lives-btn" class="close-modal">✖</button>
-            <h2>Lives no YouTube</h2>
-            <div class="api-key-row">
-                <input id="youtube-api-key" type="text" placeholder="Cole sua API Key do YouTube (necessário para busca)" />
-                <button id="save-api-key-btn">Salvar</button>
-            </div>
-
-            <div class="api-key-row">
-                <input id="lives-query" type="text" placeholder="Palavra-chave (opcional, ex: futebol, gamer)" />
-                <select id="lives-region">
-                    <option value="">Global</option>
-                    <option value="BR">Brasil</option>
-                    <option value="US">Estados Unidos</option>
-                    <option value="PT">Portugal</option>
-                </select>
-                <select id="lives-order">
-                    <option value="date">Mais recentes</option>
-                    <option value="viewCount">Mais visualizados</option>
-                    <option value="relevance">Relevância</option>
-                </select>
-                <button id="refresh-lives-btn">Atualizar</button>
-            </div>
-
-
-            <div id="lives-error" class="lives-error" role="status" aria-live="polite"></div>
-            <pre id="lives-debug" class="lives-debug" style="display:none;"></pre>
-            <div id="lives-list" class="lives-list"></div>
-            <div class="modal-footer">
-                <button id="close-lives-btn-footer">Fechar</button>
-            </div>
-        </div>
-    </div>
-
     <main id="video-grid" class="video-grid-container"></main> 
 
-    <script src="app.js"></script>
+    <script src="app.js" type="module"></script>
 </body>
 </html>

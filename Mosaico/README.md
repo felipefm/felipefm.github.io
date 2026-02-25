@@ -2,7 +2,7 @@
 
 > *Uma janela para múltiplos mundos. Uma tela, infinitas histórias.*
 
-![Mosaico Preview](https://github.com/felipefm/felipefm.github.io/blob/master/Mosaico/print_exemplo.png?raw=true)
+![Mosaico Preview](https://via.placeholder.com/800x400/222/eee?text=O+Mosaico+em+Ação)
 
 ---
 
@@ -16,46 +16,45 @@ Seja para acompanhar as notícias de diferentes fontes, monitorar o mercado, ou 
 
 ---
 
-## ✨ A Experiência
+## ✨ A Experiência: Seja o Maestro do Cosmos Digital
 
-### 🎹 A Polifonia Visual
-Adicione quantos vídeos desejar. Eles se organizam em uma grade fluida que se adapta ao seu monitor. Você pode silenciar todos com um clique para focar no visual, ou permitir que o som de um único vídeo preencha o ambiente.
+### 🎹 A Orquestra Visual e Sonora
+Adicione quantos rios de imagens desejar. Eles se acomodam em sua tela, uma constelação de histórias. Com um gesto, silencie a orquestra inteira para contemplar a dança silenciosa das imagens, ou dê voz a um único solista, permitindo que seu som preencha o ambiente. Cada estrela em sua constelação possui seus próprios controles: silencie-a, envie-a de volta ao éter (remover), ou abra um portal direto para seu mundo de origem (assistir no YouTube).
 
-### 🎨 A Arte da Organização (Arrastar e Soltar)
-A ordem importa. Como quem organiza quadros em uma parede, você pode simplesmente clicar e arrastar os vídeos para onde eles fazem mais sentido para você. A sua organização é salva automaticamente, respeitando a sua visão.
+### 🎨 A Tapeçaria do Curador (Arrastar e Soltar)
+A ordem é a alma da narrativa. Como um tecelão divino, arraste e posicione cada vídeo, trançando os fios da sua própria tapeçaria visual. Sua obra é memorizada, um testamento ao seu olhar único, salva automaticamente para que sua curadoria perdure.
 
-### 📡 O Radar de Vidas (Lives)
-Não perca o momento. Com a nossa ferramenta de busca integrada, você pode encontrar o que está acontecendo **agora** no mundo.
-* *Nota: Requer uma chave mágica (API Key) para funcionar plenamente.*
+###  O Oráculo das Vidas (Lives & Favoritos)
+Não há necessidade de chaves mágicas ou pactos com gigantes distantes. O Mosaico possui seu próprio oráculo local, um sussurro que viaja pelas correntes digitais para descobrir quais de seus canais favoritos estão pulsando com vida, **agora**.
 
-### 💎 Seus Tesouros (Favoritos & Presets)
-* **Favoritos Inteligentes:** Guarde seus canais preferidos. O sistema sussurra para você quando eles entram ao vivo, permitindo o acesso com um único clique.
-* **Presets de Humor:** Crie grupos de canais. Um clique para "Notícias da Manhã", outro para "Jogos de Sexta à Noite". O ambiente muda instantaneamente conforme o seu desejo.
+*   **Invocando os Menestréis:** Adicione seus contadores de histórias e sábios preferidos, seja por seu nome antigo (ID do canal) ou seu brasão moderno (@handle).
+*   **O Ritual da Descoberta:** Com um clique em "Verificar Lives", observe um fio de luz — a barra de progresso — tecer-se pela tela, revelando, um a um, quais mundos estão despertos e prontos para serem explorados.
 
-### 🎒 Memórias Portáteis
-Seus dados vivem com você. Tudo é salvo no seu navegador. Vai mudar de computador? Exporte suas configurações e leve seu universo com você em um pequeno arquivo.
+### 📚 O Grimório de Mundos (Presets & Portabilidade)
+*   **Presets de Alma:** Crie encantamentos. Um feitiço para invocar "Notícias da Alvorada", outro para conjurar "Crônicas de Sexta à Noite". Com um toque, o ambiente se transmuta, alinhando-se ao seu espírito.
+*   **Memórias Nômades:** Seu universo não está preso a um único lugar. Exporte seu grimório de favoritos e presets. Leve sua coleção de mundos com você, contida em um pequeno pergaminho digital, pronta para ser desenrolada em qualquer novo horizonte.
 
 ---
 
-## 🚀 Como Iniciar sua Jornada
+## 🚀 Como Iniciar sua Jornada Mística
 
 Não há instalações complexas, nem terminais escuros. O Mosaico vive na web.
 
 1. **Acesse:** Abra o link do projeto (ou o arquivo `index.html` se estiver local).
 2. **Adicione:** Cole o link de um vídeo do YouTube na barra superior.
-3. **Explore:** Clique no botão **Mosaico+** para descobrir os poderes de salvar grupos e favoritos.
+3. **Explore:** Clique no botão **Mosaico+** para desvendar os poderes de salvar grupos, favoritar canais e moldar a realidade da sua tela.
 
 ---
 
-## 🖼️ Layouts para cada Momento
+## 🖼️ Cenários para Cada Contemplação
 
 A forma segue a função. Escolha como deseja ver o mundo:
 
 | Ícone | Modo | Descrição |
 | :---: | :--- | :--- |
-| 💠 | **Automático** | O fluxo natural. Os vídeos se ajustam para preencher o espaço. |
-| 🪟 | **Grade 2x2** | Perfeito equilíbrio. Quatro telas de igual importância. |
-| 🔭 | **Foco** | Um protagonista e seus observadores. Uma tela grande, três menores. |
+| 💠 | **Fluxo Cósmico** | O fluxo natural. Os vídeos se ajustam para preencher o espaço, como estrelas encontrando seu lugar no céu. |
+| 🪟 | **Altar de Quatro Faces** | Perfeito equilíbrio. Quatro telas de igual importância, quatro verdades observadas em uníssono. |
+| 🔭 | **Trono do Protagonista** | Um protagonista e seus observadores. Uma tela grande, três menores, como um sol em torno do qual planetas orbitam. |
 
 ---
 
@@ -68,19 +67,17 @@ Este projeto foi construído com a privacidade em mente.
 
 ---
 
-### 🛠️ Pequenos Detalhes Técnicos (Para os Curiosos)
+### 🛠️ A Alquimia por Trás do Véu (Para os Curiosos)
 
 Embora a alma do projeto seja a simplicidade, o corpo é feito de:
 * *HTML5 & CSS3* para a estrutura e beleza.
 * *JavaScript Puro (Vanilla)* para a magia.
-* *YouTube Data API* para a conexão com o mundo.
+* *YouTube IFrame API* para a reprodução dos vídeos.
+* *FastAPI (Python)* para o oráculo local que verifica as lives sem depender de chaves externas.
 * *LocalStorage* para a memória.
 
 ---
 
 > *"A tecnologia é melhor quando aproxima as pessoas, ou quando nos permite ver o mundo por novos ângulos."*
 
-
 Feito com 💜 para quem ama ver além.
-
-
