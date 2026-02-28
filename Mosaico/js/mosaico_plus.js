@@ -73,7 +73,7 @@ export function setupToolsLogic() {
 
         try {
             // Usa o novo endpoint do backend para validar o canal e obter os detalhes
-            const res = await fetch(`http://127.0.0.1:8000/get-channel-details/${encodeURIComponent(input)}`);
+            const res = await fetch(`http://192.168.0.6:8000/get-channel-details/${encodeURIComponent(input)}`);
             
             if (!res.ok) {
                 if (res.status === 404) {
@@ -391,3 +391,4 @@ async function checkFavoritesLive() {
         }, 1000);
     }
 }
+
