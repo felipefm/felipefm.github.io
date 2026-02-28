@@ -351,7 +351,7 @@ async function checkFavoritesLive() {
     const channelIds = [...favsMap.keys()];
 
     try {
-        const res = await fetch('http://127.0.0.1:8000/check-live-batch', {
+        const res = await fetch('http://192.168.0.6:8000/check-live-batch', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ channel_ids: channelIds }),
@@ -391,4 +391,5 @@ async function checkFavoritesLive() {
         }, 1000);
     }
 }
+
 
