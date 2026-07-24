@@ -46,11 +46,29 @@ main {
     max-width: 800px;
     margin: 0 auto;
     line-height: 1.8;
-    font-size: 1.1em;
+    font-size: var(--verse-font-size, 1.1em);
 }
 
 main p {
     margin-bottom: 1em;
+}
+
+main p.verse {
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 0.3em 0.5em;
+    margin-left: -0.5em;
+    margin-right: -0.5em;
+    transition: background-color 0.2s;
+}
+
+main p.verse.selected {
+    background-color: var(--highlight-color);
+}
+
+main p.verse.favorited::after {
+    content: ' ⭐';
+    font-size: 0.8em;
 }
 
 .verse-number {
@@ -237,6 +255,42 @@ main p {
     background-color: var(--highlight-color);
 }
 
+#main-menu .menu-section {
+    padding: 0.8rem 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border-color);
+}
+
+.menu-section-label {
+    font-size: 0.85em;
+    color: var(--text-color);
+}
+
+.font-size-buttons {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.font-size-buttons button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: var(--highlight-color);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: bold;
+    padding: 0;
+    transition: background-color 0.2s;
+}
+
+.font-size-buttons button:hover {
+    background: var(--border-color);
+}
+
 /* --- Modais --- */
 .modal {
     display: none; /* Escondido por padrão */
@@ -280,6 +334,17 @@ main p {
 }
 
 /* Modal de Tradução */
+#translation-modal-error {
+    background: #ffe5e5;
+    color: #a33;
+    border: 1px solid #e0a0a0;
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    margin-top: 1rem;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
 #translation-list {
     display: flex;
     flex-direction: column;
@@ -390,6 +455,148 @@ main p {
     background-color: yellow;
     color: #333;
     font-weight: bold;
+}
+
+/* Filtros de Busca */
+#search-filters {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+#search-filters label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9em;
+}
+
+#search-filters select {
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--modal-bg);
+    color: var(--text-color);
+}
+
+.search-checkbox-label {
+    font-size: 0.9em;
+}
+
+/* Modal de Favoritos */
+#favorites-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+#favorites-actions button {
+    background: var(--button-bg);
+    color: var(--button-text);
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+#favorites-list-container {
+    margin-top: 1.5rem;
+    max-height: 55vh;
+    overflow-y: auto;
+}
+
+.favorite-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.favorite-item:last-child {
+    border-bottom: none;
+}
+
+.favorite-item:hover {
+    background-color: var(--highlight-color);
+}
+
+.favorite-item-content strong {
+    display: block;
+    margin-bottom: 0.3rem;
+}
+
+.favorite-item-content p {
+    margin: 0;
+    font-size: 0.95em;
+}
+
+.favorite-remove-button {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 1.3em;
+    cursor: pointer;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.favorite-remove-button:hover {
+    color: var(--text-color);
+}
+
+/* Barra de Ação do Versículo */
+#verse-action-bar {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--modal-bg);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.15);
+    padding: 0.8rem 1.5rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    z-index: 1500;
+}
+
+#verse-action-reference {
+    font-weight: bold;
+    color: var(--text-color);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#verse-action-buttons {
+    display: flex;
+    gap: 0.6rem;
+}
+
+#verse-action-buttons button {
+    background: var(--highlight-color);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#verse-action-buttons button:hover {
+    background: var(--border-color);
 }
  
 /*

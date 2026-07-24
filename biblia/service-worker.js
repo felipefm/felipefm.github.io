@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bible-app-cache-v1';
+const CACHE_NAME = 'bible-app-cache-v2';
 const urlsToCache = [
   '.',
   'index.html',
@@ -6,20 +6,34 @@ const urlsToCache = [
   'script.js',
   'manifest.json',
   'styles/icon-menu.jpg',
-  'styles/icon-192.png',
-  'styles/icon-512.png',
+  'logo192.jpg',
+  'logo512.jpg',
   'translations/biblia_aa.json',
   'translations/bibliaAveMaria.json'
 ];
 
 // Evento de Instalação: Salva os arquivos em cache
 self.addEventListener('install', (event) => {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
                 console.log('Cache aberto');
                 return cache.addAll(urlsToCache);
             })
+    );
+});
+
+// Evento de Ativação: Remove caches de versões antigas
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys()
+            .then((cacheNames) => Promise.all(
+                cacheNames
+                    .filter((name) => name !== CACHE_NAME)
+                    .map((name) => caches.delete(name))
+            ))
+            .then(() => self.clients.claim())
     );
 });
 

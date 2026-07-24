@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const bookNavModal = document.getElementById('book-nav-modal');
     const chapterNavModal = document.getElementById('chapter-nav-modal');
     const searchModal = document.getElementById('search-modal');
+    const favoritesModal = document.getElementById('favorites-modal');
 
     // Botões do Header
     const searchButton = document.getElementById('search-button');
@@ -20,6 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const translationChangeButton = document.getElementById('translation-change-button');
     const menuButton = document.getElementById('menu-button');
     const mainMenu = document.getElementById('main-menu');
+    const favoritesButton = document.getElementById('favorites-button');
+    const fontDecreaseBtn = document.getElementById('font-decrease');
+    const fontIncreaseBtn = document.getElementById('font-increase');
 
     // Conteúdo dos Modais
     const translationList = document.getElementById('translation-list');
@@ -29,6 +33,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('search-input');
     const searchExecuteButton = document.getElementById('search-execute-button');
     const searchResultsContainer = document.getElementById('search-results-container');
+    const searchScopeSelect = document.getElementById('search-scope');
+    const searchWholeWordCheckbox = document.getElementById('search-whole-word');
+
+    // Favoritos
+    const favoritesListContainer = document.getElementById('favorites-list-container');
+    const favoritesExportButton = document.getElementById('favorites-export-button');
+    const favoritesImportButton = document.getElementById('favorites-import-button');
+    const favoritesImportInput = document.getElementById('favorites-import-input');
+
+    // Barra de ação do versículo
+    const verseActionBar = document.getElementById('verse-action-bar');
+    const verseActionReference = document.getElementById('verse-action-reference');
+    const verseFavoriteButton = document.getElementById('verse-favorite-button');
+    const verseCopyButton = document.getElementById('verse-copy-button');
+    const verseShareButton = document.getElementById('verse-share-button');
+
+    const translationModalError = document.getElementById('translation-modal-error');
 
     // Botões de Fechar Modais
     const closeButtons = document.querySelectorAll('.close-button');
@@ -40,6 +61,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentChapter = 0;
     let bibleData = [];
     let lastSearchQuery = '';
+    let favorites = [];
+    let selectedVerse = null;
+
+    const FONT_SIZE_MIN = 0.8;
+    const FONT_SIZE_MAX = 1.8;
+    const FONT_SIZE_STEP = 0.1;
+    const FONT_SIZE_DEFAULT = 1.1;
+    const OLD_TESTAMENT_BOOK_COUNT = 39;
 
     const translations = {
         'almeida': { name: 'João Ferreira de Almeida', file: 'biblia_aa.json' },
@@ -84,13 +113,30 @@ document.addEventListener('DOMContentLoaded', () => {
             currentTranslation = translationKey;
             localStorage.setItem('bible_translation', translationKey);
             updateTranslationBadge();
+            hideTranslationModalError();
             return true;
         } catch (error) {
             console.error(error);
             mainContent.innerHTML = `<p>Erro ao carregar a tradução. Por favor, tente novamente.</p>`;
             bibleData = []; // Garante que bibleData seja um array vazio em caso de falha
+            showTranslationModalError();
             return false;
         }
+    }
+
+    function showTranslationModalError() {
+        if (!translationModalError) return;
+        const isFileProtocol = window.location.protocol === 'file:';
+        translationModalError.textContent = isFileProtocol
+            ? 'Não foi possível carregar a tradução. Você abriu o index.html diretamente do disco (file://) — por segurança, os navegadores bloqueiam o carregamento de arquivos locais assim. Sirva a pasta com um servidor local (ex: extensão "Live Server" do VS Code, ou "npx serve") e acesse via http://localhost.'
+            : 'Não foi possível carregar a tradução. Verifique sua conexão e tente novamente.';
+        translationModalError.classList.remove('hidden');
+    }
+
+    function hideTranslationModalError() {
+        if (!translationModalError) return;
+        translationModalError.classList.add('hidden');
+        translationModalError.textContent = '';
     }
 
     function updateTranslationBadge() {
@@ -138,11 +184,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let chapterHtml = '';
         chapter.forEach((verse, index) => {
-            chapterHtml += `<p id="v-${index}"><span class="verse-number">${index + 1}</span> ${verse}</p>`; // Adicionado ID para cada versículo
+            const favoritedClass = isFavorited(currentBookIndex, currentChapter, index) ? ' favorited' : '';
+            chapterHtml += `<p id="v-${index}" class="verse${favoritedClass}" data-verse-index="${index}"><span class="verse-number">${index + 1}</span> ${verse}</p>`; // Adicionado ID para cada versículo
         });
 
         mainContent.innerHTML = chapterHtml;
         updateChapterControls();
+        selectedVerse = null;
+        hideVerseActionBar();
 
         // Salva o estado atual (usando os índices atuais, que podem ter sido corrigidos)
         localStorage.setItem('bible_book', currentBookIndex);
@@ -173,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const listItem = document.createElement('li');
             listItem.textContent = book.name;
             listItem.dataset.bookIndex = index; // 'name' agora é a propriedade correta
-            if (index < 39) { // Assumindo 39 livros no AT
+            if (index < OLD_TESTAMENT_BOOK_COUNT) { // Assumindo 39 livros no AT
                 oldTestamentList.appendChild(listItem);
             } else {
                 newTestamentList.appendChild(listItem);
@@ -232,16 +281,28 @@ document.addEventListener('DOMContentLoaded', () => {
         // Armazena a última busca para usar no destaque
         lastSearchQuery = query;
 
+        const scope = searchScopeSelect.value; // 'all' | 'ot' | 'nt' | 'current'
+        const wholeWord = searchWholeWordCheckbox.checked;
+
         searchResultsContainer.innerHTML = '<p>Buscando...</p>';
-        
+
         // Usar setTimeout para não bloquear a UI
         setTimeout(() => {
             const results = [];
-            const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Limites de palavra baseados em \p{L}/\p{N} (em vez de \b) para lidar corretamente
+            // com acentuação do português, que \b (baseado em \w) não reconhece.
+            const pattern = wholeWord ? `(?<![\\p{L}\\p{N}_])${escapedQuery}(?![\\p{L}\\p{N}_])` : escapedQuery;
+            const testRegex = new RegExp(pattern, wholeWord ? 'iu' : 'i');
+            const highlightRegex = new RegExp(pattern, wholeWord ? 'giu' : 'gi');
 
             bibleData.forEach((book, bookIndex) => {
+                if (scope === 'ot' && bookIndex >= OLD_TESTAMENT_BOOK_COUNT) return;
+                if (scope === 'nt' && bookIndex < OLD_TESTAMENT_BOOK_COUNT) return;
+                if (scope === 'current' && bookIndex !== currentBookIndex) return;
+
                 // Busca no nome do livro
-                if (book.name.toLowerCase().includes(query)) {
+                if (testRegex.test(book.name)) {
                     results.push({
                         bookIndex: bookIndex,
                         chapterIndex: 0, // Aponta para o primeiro capítulo
@@ -255,9 +316,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (book.chapters) {
                     book.chapters.forEach((chapter, chapterIndex) => {
                         chapter.forEach((verse, verseIndex) => {
-                            if (verse.toLowerCase().includes(query)) {
+                            if (testRegex.test(verse)) {
                                 const reference = `${book.name} ${chapterIndex + 1}:${verseIndex + 1}`; // 'name' agora é a propriedade correta
-                                const highlightedVerse = verse.replace(regex, `<span class="search-highlight">$&</span>`);
+                                const highlightedVerse = verse.replace(highlightRegex, `<span class="search-highlight">$&</span>`);
                                 results.push({
                                     bookIndex,
                                     chapterIndex,
@@ -291,6 +352,169 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         });
         searchResultsContainer.innerHTML = resultsHtml;
+    }
+
+    // --- Favoritos ---
+
+    function makeFavoriteId(translation, bookIndex, chapterIndex, verseIndex) {
+        return `${translation}-${bookIndex}-${chapterIndex}-${verseIndex}`;
+    }
+
+    function isFavorited(bookIndex, chapterIndex, verseIndex) {
+        const id = makeFavoriteId(currentTranslation, bookIndex, chapterIndex, verseIndex);
+        return favorites.some(fav => fav.id === id);
+    }
+
+    function loadFavorites() {
+        try {
+            const stored = localStorage.getItem('bible_favorites');
+            const parsed = stored ? JSON.parse(stored) : [];
+            favorites = Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            console.error('Erro ao carregar favoritos:', error);
+            favorites = [];
+        }
+    }
+
+    function saveFavorites() {
+        localStorage.setItem('bible_favorites', JSON.stringify(favorites));
+    }
+
+    // Alterna o favorito e retorna true se o versículo acabou de ser favoritado
+    function toggleFavorite(bookIndex, chapterIndex, verseIndex, reference, text) {
+        const id = makeFavoriteId(currentTranslation, bookIndex, chapterIndex, verseIndex);
+        const existingIndex = favorites.findIndex(fav => fav.id === id);
+        if (existingIndex >= 0) {
+            favorites.splice(existingIndex, 1);
+            saveFavorites();
+            return false;
+        }
+        favorites.push({
+            id,
+            translation: currentTranslation,
+            book: bookIndex,
+            chapter: chapterIndex,
+            verse: verseIndex,
+            reference,
+            text,
+            addedAt: new Date().toISOString()
+        });
+        saveFavorites();
+        return true;
+    }
+
+    function populateFavoritesList() {
+        if (favorites.length === 0) {
+            favoritesListContainer.innerHTML = '<p>Nenhum versículo favoritado ainda.</p>';
+            return;
+        }
+        const sorted = [...favorites].sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt));
+        favoritesListContainer.innerHTML = sorted.map(fav => `
+            <div class="favorite-item" data-id="${fav.id}" data-book="${fav.book}" data-chapter="${fav.chapter}" data-verse="${fav.verse}" data-translation="${fav.translation}">
+                <div class="favorite-item-content">
+                    <strong>${fav.reference}</strong>
+                    <p>${fav.text}</p>
+                </div>
+                <button class="favorite-remove-button" aria-label="Remover favorito" title="Remover favorito">&times;</button>
+            </div>
+        `).join('');
+    }
+
+    function exportFavorites() {
+        const blob = new Blob([JSON.stringify(favorites, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'favoritos-biblia.json';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    function importFavoritesFromFile(file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const imported = JSON.parse(reader.result);
+                if (!Array.isArray(imported)) {
+                    throw new Error('O arquivo não contém uma lista de favoritos.');
+                }
+                const existingIds = new Set(favorites.map(fav => fav.id));
+                let addedCount = 0;
+                imported.forEach(fav => {
+                    if (fav && fav.id && !existingIds.has(fav.id)) {
+                        favorites.push(fav);
+                        existingIds.add(fav.id);
+                        addedCount++;
+                    }
+                });
+                saveFavorites();
+                populateFavoritesList();
+                alert(`${addedCount} favorito(s) importado(s) com sucesso.`);
+            } catch (error) {
+                console.error('Erro ao importar favoritos:', error);
+                alert('Não foi possível importar o arquivo. Verifique se é um JSON de favoritos válido.');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // --- Ajuste de Fonte ---
+
+    function applyFontSize(size) {
+        document.documentElement.style.setProperty('--verse-font-size', `${size}em`);
+        localStorage.setItem('bible_font_size', size);
+    }
+
+    function initializeFontSize() {
+        const saved = parseFloat(localStorage.getItem('bible_font_size'));
+        applyFontSize(!isNaN(saved) ? saved : FONT_SIZE_DEFAULT);
+    }
+
+    function changeFontSize(delta) {
+        const current = parseFloat(localStorage.getItem('bible_font_size')) || FONT_SIZE_DEFAULT;
+        const next = Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN, +(current + delta).toFixed(1)));
+        applyFontSize(next);
+    }
+
+    // --- Seleção de Versículo (favoritar / copiar / compartilhar) ---
+
+    function showVerseActionBar() {
+        verseActionReference.textContent = selectedVerse.reference;
+        verseFavoriteButton.textContent = isFavorited(selectedVerse.book, selectedVerse.chapter, selectedVerse.verse) ? '⭐' : '☆';
+        verseActionBar.style.display = 'flex';
+    }
+
+    function hideVerseActionBar() {
+        verseActionBar.style.display = 'none';
+    }
+
+    function selectVerse(verseIndex, verseEl) {
+        const alreadySelected = selectedVerse
+            && selectedVerse.book === currentBookIndex
+            && selectedVerse.chapter === currentChapter
+            && selectedVerse.verse === verseIndex;
+
+        document.querySelectorAll('main p.verse.selected').forEach(el => el.classList.remove('selected'));
+
+        if (alreadySelected) {
+            selectedVerse = null;
+            hideVerseActionBar();
+            return;
+        }
+
+        verseEl.classList.add('selected');
+        const book = bibleData[currentBookIndex];
+        const verseText = book.chapters[currentChapter][verseIndex];
+        selectedVerse = {
+            book: currentBookIndex,
+            chapter: currentChapter,
+            verse: verseIndex,
+            reference: `${book.name} ${currentChapter + 1}:${verseIndex + 1}`,
+            text: verseText
+        };
+        showVerseActionBar();
     }
 
     // --- Event Listeners ---
@@ -338,6 +562,114 @@ document.addEventListener('DOMContentLoaded', () => {
 
     translationChangeButton.addEventListener('click', () => {
         openModal(translationModal);
+    });
+
+    favoritesButton.addEventListener('click', () => {
+        populateFavoritesList();
+        openModal(favoritesModal);
+        closeMenu();
+    });
+
+    // Ajuste de tamanho de fonte
+    fontDecreaseBtn.addEventListener('click', () => changeFontSize(-FONT_SIZE_STEP));
+    fontIncreaseBtn.addEventListener('click', () => changeFontSize(FONT_SIZE_STEP));
+
+    // Seleção de versículo (clique para favoritar/copiar/compartilhar)
+    mainContent.addEventListener('click', (event) => {
+        const verseEl = event.target.closest('p.verse');
+        if (verseEl) {
+            selectVerse(parseInt(verseEl.dataset.verseIndex), verseEl);
+        }
+    });
+
+    verseFavoriteButton.addEventListener('click', () => {
+        if (!selectedVerse) return;
+        const nowFavorited = toggleFavorite(selectedVerse.book, selectedVerse.chapter, selectedVerse.verse, selectedVerse.reference, selectedVerse.text);
+        verseFavoriteButton.textContent = nowFavorited ? '⭐' : '☆';
+        const verseEl = document.getElementById(`v-${selectedVerse.verse}`);
+        if (verseEl) {
+            verseEl.classList.toggle('favorited', nowFavorited);
+        }
+    });
+
+    verseCopyButton.addEventListener('click', async () => {
+        if (!selectedVerse) return;
+        const content = `"${selectedVerse.text}" — ${selectedVerse.reference}`;
+        try {
+            await navigator.clipboard.writeText(content);
+            verseCopyButton.textContent = '✅';
+            setTimeout(() => { verseCopyButton.textContent = '📋'; }, 1500);
+        } catch (error) {
+            console.error('Erro ao copiar versículo:', error);
+            alert('Não foi possível copiar o versículo.');
+        }
+    });
+
+    verseShareButton.addEventListener('click', async () => {
+        if (!selectedVerse) return;
+        const content = `"${selectedVerse.text}" — ${selectedVerse.reference}`;
+        try {
+            await navigator.share({ text: content });
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error('Erro ao compartilhar versículo:', error);
+            }
+        }
+    });
+
+    // Favoritos: exportar, importar, remover e navegar
+    favoritesExportButton.addEventListener('click', exportFavorites);
+
+    favoritesImportButton.addEventListener('click', () => favoritesImportInput.click());
+
+    favoritesImportInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            importFavoritesFromFile(file);
+        }
+        favoritesImportInput.value = '';
+    });
+
+    favoritesListContainer.addEventListener('click', (event) => {
+        const removeBtn = event.target.closest('.favorite-remove-button');
+        if (removeBtn) {
+            const id = removeBtn.closest('.favorite-item').dataset.id;
+            favorites = favorites.filter(fav => fav.id !== id);
+            saveFavorites();
+            populateFavoritesList();
+            return;
+        }
+
+        const item = event.target.closest('.favorite-item');
+        if (!item) return;
+
+        const translation = item.dataset.translation;
+        const bookIndex = parseInt(item.dataset.book);
+        const chapterIndex = parseInt(item.dataset.chapter);
+        const verseIndex = parseInt(item.dataset.verse);
+
+        const navigateAndScroll = () => {
+            if (!bibleData[bookIndex] || !bibleData[bookIndex].chapters || !bibleData[bookIndex].chapters[chapterIndex]) {
+                alert('Este favorito não existe na tradução atual.');
+                return;
+            }
+            loadChapter(bookIndex, chapterIndex);
+            closeAllModals();
+            setTimeout(() => {
+                const verseEl = document.getElementById(`v-${verseIndex}`);
+                if (verseEl) {
+                    verseEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 100);
+        };
+
+        if (translation && translation !== currentTranslation) {
+            loadBible(translation).then(success => {
+                if (success) navigateAndScroll();
+            });
+        } else {
+            navigateAndScroll();
+        }
     });
 
     // Abrir/Fechar menu dropdown
@@ -507,6 +839,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function initializeApp() {
         initializeTheme();
+        initializeFontSize();
+        loadFavorites();
+
+        if (!navigator.share) {
+            verseShareButton.classList.add('hidden');
+        }
+        if (!navigator.clipboard) {
+            verseCopyButton.classList.add('hidden');
+        }
 
         // Popula o modal de tradução
         translationList.innerHTML = Object.keys(translations).map(key => `

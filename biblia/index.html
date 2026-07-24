@@ -33,6 +33,14 @@
                 <div id="main-menu" class="hidden">
                     <button id="chapter-nav-button">Capítulos</button>
                     <button id="translation-change-button">Trocar Versão</button>
+                    <button id="favorites-button">⭐ Favoritos</button>
+                    <div id="font-size-controls" class="menu-section">
+                        <span class="menu-section-label">Tamanho da fonte</span>
+                        <div class="font-size-buttons">
+                            <button id="font-decrease" aria-label="Diminuir fonte">A-</button>
+                            <button id="font-increase" aria-label="Aumentar fonte">A+</button>
+                        </div>
+                    </div>
                     <!-- O botão de tema será inserido aqui pelo JS -->
                 </div>
             </div>
@@ -47,6 +55,7 @@
     <div id="translation-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="translation-modal-title">
         <div class="modal-content">
             <h2>Selecione uma Versão da Bíblia</h2>
+            <div id="translation-modal-error" class="hidden"></div>
             <div id="translation-list">
                 <!-- Opções de tradução serão inseridas aqui -->
             </div>
@@ -92,9 +101,50 @@
                 <input type="search" id="search-input" placeholder="Digite um livro ou palavra-chave...">
                 <button id="search-execute-button">Buscar</button>
             </div>
+            <div id="search-filters">
+                <label>
+                    <span>Buscar em:</span>
+                    <select id="search-scope">
+                        <option value="all">Toda a Bíblia</option>
+                        <option value="ot">Antigo Testamento</option>
+                        <option value="nt">Novo Testamento</option>
+                        <option value="current">Livro atual</option>
+                    </select>
+                </label>
+                <label class="search-checkbox-label">
+                    <input type="checkbox" id="search-whole-word">
+                    Palavra exata
+                </label>
+            </div>
             <div id="search-results-container">
                 <!-- Resultados da busca aparecerão aqui -->
             </div>
+        </div>
+    </div>
+
+    <!-- Modal de Favoritos -->
+    <div id="favorites-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="favorites-modal-title">
+        <div class="modal-content">
+            <span class="close-button favorites-modal-close" role="button" aria-label="Fechar favoritos">&times;</span>
+            <h2 id="favorites-modal-title">Versículos Favoritos</h2>
+            <div id="favorites-actions">
+                <button id="favorites-export-button">Exportar (.json)</button>
+                <button id="favorites-import-button">Importar (.json)</button>
+                <input type="file" id="favorites-import-input" accept="application/json" class="hidden">
+            </div>
+            <div id="favorites-list-container">
+                <!-- Lista de favoritos será inserida aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra de ação do versículo selecionado -->
+    <div id="verse-action-bar">
+        <span id="verse-action-reference"></span>
+        <div id="verse-action-buttons">
+            <button id="verse-favorite-button" aria-label="Favoritar versículo" title="Favoritar">☆</button>
+            <button id="verse-copy-button" aria-label="Copiar versículo" title="Copiar">📋</button>
+            <button id="verse-share-button" aria-label="Compartilhar versículo" title="Compartilhar">📤</button>
         </div>
     </div>
 
