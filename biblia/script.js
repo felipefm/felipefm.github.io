@@ -42,12 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const favoritesImportButton = document.getElementById('favorites-import-button');
     const favoritesImportInput = document.getElementById('favorites-import-input');
 
-    // Barra de ação do versículo
+    // Barra de ação do(s) versículo(s)
     const verseActionBar = document.getElementById('verse-action-bar');
     const verseActionReference = document.getElementById('verse-action-reference');
     const verseFavoriteButton = document.getElementById('verse-favorite-button');
     const verseCopyButton = document.getElementById('verse-copy-button');
     const verseShareButton = document.getElementById('verse-share-button');
+    const verseClearButton = document.getElementById('verse-clear-button');
 
     const translationModalError = document.getElementById('translation-modal-error');
 
@@ -62,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let bibleData = [];
     let lastSearchQuery = '';
     let favorites = [];
-    let selectedVerse = null;
+    let verseSelection = null; // { anchor, start, end } (índices de versículo no capítulo atual)
 
     const FONT_SIZE_MIN = 0.8;
     const FONT_SIZE_MAX = 1.8;
@@ -190,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         mainContent.innerHTML = chapterHtml;
         updateChapterControls();
-        selectedVerse = null;
+        verseSelection = null;
         hideVerseActionBar();
 
         // Salva o estado atual (usando os índices atuais, que podem ter sido corrigidos)
@@ -478,11 +479,57 @@ document.addEventListener('DOMContentLoaded', () => {
         applyFontSize(next);
     }
 
-    // --- Seleção de Versículo (favoritar / copiar / compartilhar) ---
+    // --- Seleção de Versículo(s) (favoritar / copiar / compartilhar) ---
+    // Interação de intervalo: o 1º clique marca o início (e já funciona sozinho, como um único
+    // versículo); um 2º clique em outro versículo fecha o intervalo entre os dois. Um clique
+    // depois de um intervalo já fechado começa uma nova seleção do zero.
 
-    function showVerseActionBar() {
-        verseActionReference.textContent = selectedVerse.reference;
-        verseFavoriteButton.textContent = isFavorited(selectedVerse.book, selectedVerse.chapter, selectedVerse.verse) ? '⭐' : '☆';
+    function getSelectionReference() {
+        const book = bibleData[currentBookIndex];
+        const { start, end } = verseSelection;
+        if (start === end) {
+            return `${book.name} ${currentChapter + 1}:${start + 1}`;
+        }
+        return `${book.name} ${currentChapter + 1}:${start + 1}-${end + 1}`;
+    }
+
+    function getSelectionText() {
+        const chapterVerses = bibleData[currentBookIndex].chapters[currentChapter];
+        const { start, end } = verseSelection;
+        if (start === end) {
+            return chapterVerses[start];
+        }
+        const parts = [];
+        for (let i = start; i <= end; i++) {
+            parts.push(`${i + 1}. ${chapterVerses[i]}`);
+        }
+        return parts.join(' ');
+    }
+
+    function isSelectionFullyFavorited() {
+        const { start, end } = verseSelection;
+        for (let i = start; i <= end; i++) {
+            if (!isFavorited(currentBookIndex, currentChapter, i)) return false;
+        }
+        return true;
+    }
+
+    function renderVerseSelection() {
+        document.querySelectorAll('main p.verse.selected').forEach(el => el.classList.remove('selected'));
+
+        if (!verseSelection) {
+            hideVerseActionBar();
+            return;
+        }
+
+        const { start, end } = verseSelection;
+        for (let i = start; i <= end; i++) {
+            const verseEl = document.getElementById(`v-${i}`);
+            if (verseEl) verseEl.classList.add('selected');
+        }
+
+        verseActionReference.textContent = getSelectionReference();
+        verseFavoriteButton.textContent = isSelectionFullyFavorited() ? '⭐' : '☆';
         verseActionBar.style.display = 'flex';
     }
 
@@ -490,31 +537,25 @@ document.addEventListener('DOMContentLoaded', () => {
         verseActionBar.style.display = 'none';
     }
 
-    function selectVerse(verseIndex, verseEl) {
-        const alreadySelected = selectedVerse
-            && selectedVerse.book === currentBookIndex
-            && selectedVerse.chapter === currentChapter
-            && selectedVerse.verse === verseIndex;
-
-        document.querySelectorAll('main p.verse.selected').forEach(el => el.classList.remove('selected'));
-
-        if (alreadySelected) {
-            selectedVerse = null;
-            hideVerseActionBar();
-            return;
+    function handleVerseClick(verseIndex) {
+        if (!verseSelection) {
+            // Primeiro clique: seleciona um único versículo (âncora do intervalo).
+            verseSelection = { anchor: verseIndex, start: verseIndex, end: verseIndex };
+        } else if (verseSelection.start === verseSelection.end && verseSelection.anchor === verseIndex) {
+            // Clicou de novo no único versículo selecionado: desmarca.
+            verseSelection = null;
+        } else if (verseSelection.start !== verseSelection.end) {
+            // Já havia um intervalo fechado: recomeça a seleção a partir deste versículo.
+            verseSelection = { anchor: verseIndex, start: verseIndex, end: verseIndex };
+        } else {
+            // Segundo clique: fecha o intervalo entre a âncora e este versículo.
+            verseSelection = {
+                anchor: verseSelection.anchor,
+                start: Math.min(verseSelection.anchor, verseIndex),
+                end: Math.max(verseSelection.anchor, verseIndex)
+            };
         }
-
-        verseEl.classList.add('selected');
-        const book = bibleData[currentBookIndex];
-        const verseText = book.chapters[currentChapter][verseIndex];
-        selectedVerse = {
-            book: currentBookIndex,
-            chapter: currentChapter,
-            verse: verseIndex,
-            reference: `${book.name} ${currentChapter + 1}:${verseIndex + 1}`,
-            text: verseText
-        };
-        showVerseActionBar();
+        renderVerseSelection();
     }
 
     // --- Event Listeners ---
@@ -574,47 +615,65 @@ document.addEventListener('DOMContentLoaded', () => {
     fontDecreaseBtn.addEventListener('click', () => changeFontSize(-FONT_SIZE_STEP));
     fontIncreaseBtn.addEventListener('click', () => changeFontSize(FONT_SIZE_STEP));
 
-    // Seleção de versículo (clique para favoritar/copiar/compartilhar)
+    // Seleção de versículo(s) (clique para favoritar/copiar/compartilhar; 2 cliques = intervalo)
     mainContent.addEventListener('click', (event) => {
         const verseEl = event.target.closest('p.verse');
         if (verseEl) {
-            selectVerse(parseInt(verseEl.dataset.verseIndex), verseEl);
+            handleVerseClick(parseInt(verseEl.dataset.verseIndex));
         }
     });
 
     verseFavoriteButton.addEventListener('click', () => {
-        if (!selectedVerse) return;
-        const nowFavorited = toggleFavorite(selectedVerse.book, selectedVerse.chapter, selectedVerse.verse, selectedVerse.reference, selectedVerse.text);
-        verseFavoriteButton.textContent = nowFavorited ? '⭐' : '☆';
-        const verseEl = document.getElementById(`v-${selectedVerse.verse}`);
-        if (verseEl) {
-            verseEl.classList.toggle('favorited', nowFavorited);
+        if (!verseSelection) return;
+        const book = bibleData[currentBookIndex];
+        const chapterVerses = book.chapters[currentChapter];
+        const { start, end } = verseSelection;
+        const shouldFavorite = !isSelectionFullyFavorited();
+
+        for (let i = start; i <= end; i++) {
+            const currentlyFavorited = isFavorited(currentBookIndex, currentChapter, i);
+            if (shouldFavorite && !currentlyFavorited) {
+                const reference = `${book.name} ${currentChapter + 1}:${i + 1}`;
+                toggleFavorite(currentBookIndex, currentChapter, i, reference, chapterVerses[i]);
+            } else if (!shouldFavorite && currentlyFavorited) {
+                toggleFavorite(currentBookIndex, currentChapter, i, '', '');
+            }
+            const verseEl = document.getElementById(`v-${i}`);
+            if (verseEl) {
+                verseEl.classList.toggle('favorited', shouldFavorite);
+            }
         }
+        verseFavoriteButton.textContent = shouldFavorite ? '⭐' : '☆';
     });
 
     verseCopyButton.addEventListener('click', async () => {
-        if (!selectedVerse) return;
-        const content = `"${selectedVerse.text}" — ${selectedVerse.reference}`;
+        if (!verseSelection) return;
+        const content = `"${getSelectionText()}" — ${getSelectionReference()}`;
         try {
             await navigator.clipboard.writeText(content);
             verseCopyButton.textContent = '✅';
             setTimeout(() => { verseCopyButton.textContent = '📋'; }, 1500);
         } catch (error) {
-            console.error('Erro ao copiar versículo:', error);
-            alert('Não foi possível copiar o versículo.');
+            console.error('Erro ao copiar versículo(s):', error);
+            alert('Não foi possível copiar o(s) versículo(s).');
         }
     });
 
     verseShareButton.addEventListener('click', async () => {
-        if (!selectedVerse) return;
-        const content = `"${selectedVerse.text}" — ${selectedVerse.reference}`;
+        if (!verseSelection) return;
+        const content = `"${getSelectionText()}" — ${getSelectionReference()}`;
         try {
             await navigator.share({ text: content });
         } catch (error) {
             if (error.name !== 'AbortError') {
-                console.error('Erro ao compartilhar versículo:', error);
+                console.error('Erro ao compartilhar versículo(s):', error);
             }
         }
+    });
+
+    verseClearButton.addEventListener('click', () => {
+        verseSelection = null;
+        renderVerseSelection();
     });
 
     // Favoritos: exportar, importar, remover e navegar
